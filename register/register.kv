@@ -1,0 +1,74 @@
+<RegisterTextField>
+    line_color_normal: 1, 1, 1, 1
+    line_color_focus: 1, 1, 1, 1
+    hint_text_color_normal: 1, 1, 1, 1
+    hint_text_color_focus: 1, 1, 1, 1
+    helper_text_color_normal: 1, 1, 1, 1
+    helper_text_color_focus: 1, 1, 1, 1
+    text_color: 1, 1, 1, 1
+    text_color_normal: 1, 1, 1, 1
+    text_color_focus: 1, 1, 1, 1
+<RegisterWindow>
+    id: main_win
+    orientation: "vertical"
+    space_x: self.size[0]/3
+    space_y: self.size[1]/3
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: main_win.space_x, main_win.space_y
+        spacing: 20
+        MDLabel:
+            text: "Register Account"
+            font_style: "H2"
+            bold: True
+            halign: "center"
+            size_hint_y: None
+        MDIconButton:
+            icon_color: 0, 0, 0, 1
+            md_bg_color: 0, 0, 0, 0
+            icon: "arrow-left-bold"
+            on_release:
+                root.goto_sign_in()
+        MDBoxLayout:
+            orientation: "vertical"
+            padding: 50, 20
+            size_hint_y: None
+            height: self.minimum_height
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 1
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [12, 12, 12, 12]
+            RegisterTextField:
+                id: username_fld
+                hint_text: "Username"
+                helper_text: "Username Already Exists"
+                helper_text_mode: "on_error"
+                focus: True
+                on_text_validate:
+                    password_fld.focus = True
+            RegisterTextField:
+                id: password_fld
+                hint_text: "Password"
+                helper_text: "Password cannot be empty"
+                helper_text_mode: "on_error"
+                password: True
+                on_text_validate:
+                    email_fld.focus = True
+            RegisterTextField:
+                id: email_fld
+                hint_text: "Email"
+                helper_text: "This Email has already been used"
+                helper_text_mode: "on_error"
+                on_text_validate:
+                    root.register(username_fld.text, password_fld.text, email_fld.text)
+            MDRaisedButton:
+                size_hint_x: 1
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                md_bg_color: 1, 1, 1, 1
+                text: "Register"
+                on_release:
+                    root.register(username_fld.text, password_fld.text, email_fld.text)

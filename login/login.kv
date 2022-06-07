@@ -1,0 +1,74 @@
+#: import utils kivy.utils
+<CustomTextField@MDTextField>
+    line_color_normal: 0, 0, 0, 1
+    line_color_focus: 0, 0, 0, 1
+    hint_text_color_normal: 0, 0, 0, 1
+    hint_text_color_focus: 0, 0, 0, 1
+    text_color: 0, 0, 0, 1
+    text_color_normal: 0, 0, 0, 1
+    text_color_focus: 0, 0, 0, 1
+<CustomButton@MDRaisedButton>
+    md_bg_color: 0, 0, 0, 1
+<LoginWindow>
+    id: main_win
+    orientation: "vertical"
+    space_x: self.size[0]/3
+    MDLabel:
+        text: ""
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: 20
+        padding: main_win.space_x, 20
+        MDLabel:
+            text: "Online Bus Reservation"
+            font_style: "H4"
+            bold: True
+            halign: "center"
+            size_hint_y: None
+        CustomTextField:
+            id: username_fld
+            helper_text: "Invalid Username"
+            helper_text_mode: "on_error"
+            hint_text: "Username"
+            on_text_validate:
+                password_fld.focus = True
+        CustomTextField:
+            id: password_fld
+            helper_text: "Incorrect Password"
+            helper_text_mode: "on_error"
+            hint_text: "Password"
+            password: True
+            on_text_validate:
+                root.validate_user(username_fld.text, password_fld.text)
+    MDBoxLayout:
+        orientation: "horizontal"
+        spacing: 20
+        size_hint_y: None
+        padding: main_win.space_x, 20
+        CustomButton:
+            text: "Sign In"
+            size_hint_x: .5
+            on_release:
+                root.validate_user(username_fld.text, password_fld.text)
+        CustomButton:
+            text: "Exit"
+            size_hint_x: .5
+            on_release:
+                app.stop()
+    MDBoxLayout:
+        orientation: "horizontal"
+        padding: main_win.space_x, 0
+        size_hint_y: None
+        height: 20
+        MDLabel:
+            text: ""
+            size_hint_x: .7
+        MDTextButton:
+            theme_text_color: "Custom"
+            size_hint_x: None
+            text: "Register New Account"
+            text_color: utils.get_color_from_hex("#4299f5")
+            on_release:
+                root.goto_register()
+    MDLabel:
+        text: ""

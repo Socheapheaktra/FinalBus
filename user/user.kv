@@ -1,0 +1,300 @@
+#: import toast kivymd.toast
+<CustomDrawerItem@MDNavigationDrawerItem>
+    text_color: 0, 0, 0, 1
+    icon_color: 0, 0, 0, 1
+<OptionCard>
+    radius: [12, 12, 12, 12]
+    height: dp(120)
+    FloatLayout:
+        MDIconButton:
+            pos_hint: {'center_x': .5, 'center_y': .6}
+            icon: root.icon
+            md_bg_color: (1, 1, 1, 1)
+        MDLabel:
+            pos_hint: {'center_x': .5, 'center_y': .3}
+            halign: "center"
+            text: root.text
+            font_style: "H5"
+            bold: True
+<CustomTextField>
+    icon_left_color: 0, 0, 0, 1
+    icon_left_color_normal: 0, 0, 0, 1
+    icon_left_color_focus: 0, 0, 0, 1
+<CustomButton@MDRaisedButton>
+    md_bg_color: 0, 0, 0, 1
+<UserWindow>
+    id: main_win
+    orientation: "vertical"
+    MDNavigationLayout:
+        MDNavigationDrawer:
+            id: nav_drawer
+            type: "standard"
+            anchor: "left"
+            MDNavigationDrawerMenu:
+                spacing: 20
+                MDNavigationDrawerHeader:
+                    id: nav_drawer_header
+                    title: "Settings"
+                    title_color: 0, 0, 0, 1
+                    text: "Account Name"
+                    text_color: 0, 0, 0, 1
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+                CustomDrawerItem:
+                    icon: "account"
+                    text: "Edit Profile"
+                    on_release:
+                        root.account_edit_profile()
+                        nav_drawer.set_state("close")
+                CustomDrawerItem:
+                    icon: "decagram-outline"
+                    text: "Account Settings"
+                    on_release:
+                        root.account_settings()
+                        nav_drawer.set_state("close")
+                CustomDrawerItem:
+                    icon: "logout"
+                    text: "Logout"
+                    on_release:
+                        root.show_logout_dialog()
+                        nav_drawer.set_state("close")
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+        ScreenManager:
+            id: scrn_mngr
+            MDScreen:
+                id: main_scrn
+                name: "main_scrn"
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        id: toolbar
+                        title: "Booking"
+                        type_height: "medium"
+                        md_bg_color: 0, 0, 0, 1
+                        left_action_items:
+                            [ \
+                            [ \
+                            'menu', lambda x: \
+                            nav_drawer.set_state("open") \
+                            if nav_drawer.state == "close" else \
+                            nav_drawer.set_state("close") \
+                            ] \
+                            ]
+                    MDBottomNavigation:
+                        first_widget: "booking"
+                        selected_color_background: (0, 0, 0, 1)
+                        text_color_active: (0, 0, 0, 1)
+                        MDBottomNavigationItem:
+                            id: booking
+                            name: "booking"
+                            text: "Booking"
+                            icon: "bus"
+                            on_tab_release:
+                                root.booking_home()
+                                toolbar.title = "Booking"
+                            ScreenManager:
+                                id: scrn_booking_mngr
+                                Screen:
+                                    id: scrn_booking_home
+                                    name: "scrn_booking_home"
+                                    MDBoxLayout:
+                                        id: card_item
+                                        orientation: "vertical"
+                                        padding: main_win.size[0]/8, 20
+                                        canvas.before:
+                                            Color:
+                                                rgba: (0, 0, 0, .25)
+                                            Rectangle:
+                                                size: self.size
+                                                pos: self.pos
+                                        MDCard:
+                                            radius: [12, 12, 12, 12]
+                                            orientation: "vertical"
+                                            padding: 50, 20
+                                            spacing: 10
+                                            size_hint_y: None
+                                            height: dp(300)
+                                            MDTextField:
+                                                id: location_fld
+                                                icon_left: "magnify"
+                                                icon_left_color: 0, 0, 0, 1
+                                                icon_left_color_normal: 0, 0, 0, 1
+                                                icon_left_color_focus: 0, 0, 0, 1
+                                                text_color_normal: 0, 0, 0, 1
+                                                hint_text: "Choose Location"
+                                                on_focus:
+                                                    root.booking_location()
+                                                    self.focus = False
+                                            MDBoxLayout:
+                                                orientation: "horizontal"
+                                                spacing: 10
+                                                TwoLineListItem:
+                                                    id: departure_fld
+                                                    text: "Departure Date"
+                                                    secondary_text: "Add Departure Date"
+                                                    on_release:
+                                                        root.departure_date_picker()
+                                                TwoLineListItem:
+                                                    id: return_fld
+                                                    text: "Return Date"
+                                                    secondary_text: "Add Return Date"
+                                                    on_release:
+                                                        root.return_date_picker()
+                                            CustomButton:
+                                                text: "Search"
+                                                size_hint_x: 1
+                                        MDLabel:
+                                            text: ""
+                                Screen:
+                                    id: scrn_booking_location
+                                    name: "scrn_booking_location"
+                                    ScrollView:
+                                        MDBoxLayout:
+                                            id: rv
+                                            orientation: "vertical"
+                                            spacing: 30
+                                            size_hint_y: None
+                                            height: self.minimum_height
+                                            padding: 50, 10
+                        MDBottomNavigationItem:
+                            id: ticket
+                            name: "ticket"
+                            text: "Ticket"
+                            icon: "ticket-confirmation"
+                            on_tab_release:
+                                toolbar.title = "Tickets"
+                            MDBoxLayout:
+                                orientation: "vertical"
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, .25
+                                    Rectangle:
+                                        size: self.size
+                                        pos: self.pos
+                                MDLabel:
+                                    text: "Ticket"
+                                    halign: "center"
+                                    font_style: "H2"
+            MDScreen:
+                id: scrn_setting
+                name: "scrn_setting"
+                ScreenManager:
+                    id: scrn_account_mngr
+                    Screen:
+                        id: scrn_edit_profile
+                        name: "scrn_edit_profile"
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDTopAppBar:
+                                title: "Edit Profile"
+                                type_height: "medium"
+                                md_bg_color: 0, 0, 0, 1
+                                right_action_items: [['arrow-left-bold', lambda x: root.goto_main_screen()]]
+                            MDBoxLayout:
+                                id: edit_profile_opt
+                                orientation: "vertical"
+                                padding: main_win.size[0]/4, main_win.size[1]/4
+                                spacing: 20
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, .25
+                                    Rectangle:
+                                        size: self.size
+                                        pos: self.pos
+                                CustomTextField:
+                                    id: first_name_fld
+                                    hint_text: "First Name"
+                                CustomTextField:
+                                    id: last_name_fld
+                                    hint_text: "Last Name"
+                                CustomTextField:
+                                    id: phone_fld
+                                    hint_text: "Phone Number"
+                                CustomTextField:
+                                    id: email_fld
+                                    hint_text: "Email"
+                                    helper_text: "Invalid Email Address"
+                                    helper_text_mode: "on_error"
+                                    on_text: self.error = False
+                                CustomTextField:
+                                    id: dob_fld
+                                    hint_text: "Date of Birth(DD/MM/YYYY)"
+                                    on_focus:
+                                        root.dob_date_picker()
+                                CustomButton:
+                                    text: "Update"
+                                    padding: main_win.size[0]/3, 0
+                                    size_hint_x: 1
+                                    on_release:
+                                        root.update_info(first_name_fld.text, last_name_fld.text,
+                                        phone_fld.text, email_fld.text, dob_fld.text)
+                    Screen:
+                        id: scrn_account_settings
+                        name: "scrn_account_settings"
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDTopAppBar:
+                                title: "Change Password"
+                                type_height: "medium"
+                                md_bg_color: 0, 0, 0, 1
+                                right_action_items: [['arrow-left-bold', lambda x: root.goto_main_screen()]]
+                            MDBoxLayout:
+                                id: settings_opt
+                                orientation: "vertical"
+                                padding: main_win.size[0]/4, main_win.size[1]/4
+                                spacing: 20
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, .25
+                                    Rectangle:
+                                        size: self.size
+                                        pos: self.pos
+                                CustomTextField:
+                                    id: old_pass
+                                    hint_text: "Old Password"
+                                    helper_text: "Incorrect Password"
+                                    helper_text_mode: "on_error"
+                                    icon_left: "key-variant"
+                                    password: True
+                                    on_text:
+                                        self.error = False
+                                    on_text_validate:
+                                        new_pass.focus = True
+                                CustomTextField:
+                                    id: new_pass
+                                    hint_text: "New Password"
+                                    helper_text: "Invalid Password"
+                                    helper_text_mode: "on_error"
+                                    icon_left: "key-variant"
+                                    password: True
+                                    on_text:
+                                        self.error = False
+                                    on_text_validate:
+                                        confirm_pass.focus = True
+                                CustomTextField:
+                                    id: confirm_pass
+                                    hint_text: "Confirm New Password"
+                                    helper_text: "Confirm password does not match"
+                                    helper_text_mode: "on_error"
+                                    icon_left: "key-variant"
+                                    password: True
+                                    on_text:
+                                        self.error = False
+                                    on_text_validate:
+                                        root.update_password(old_pass.text, new_pass.text, confirm_pass.text)
+                                MDBoxLayout:
+                                    orientation: "horizontal"
+                                    spacing: 20
+                                    CustomButton:
+                                        text: "Update"
+                                        size_hint_x: .5
+                                        on_release:
+                                            root.update_password(old_pass.text, new_pass.text, confirm_pass.text)
+                                    CustomButton:
+                                        text: "Show Passwords"
+                                        size_hint_x: .5
+                                        on_release:
+                                            old_pass.password = False if old_pass.password == True else True
+                                            new_pass.password = False if new_pass.password == True else True
+                                            confirm_pass.password = False if confirm_pass.password == True else True

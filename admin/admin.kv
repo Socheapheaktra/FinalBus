@@ -1,0 +1,299 @@
+<CustomDrawerItem@MDNavigationDrawerItem>
+    text_color: 0, 0, 0, 1
+    icon_color: 0, 0, 0, 1
+<CustomTextField>
+    icon_left_color: 0, 0, 0, 1
+    icon_left_color_normal: 0, 0, 0, 1
+    icon_left_color_focus: 0, 0, 0, 1
+<TableHeader@MDLabel>
+    bold: True
+    text_color: 0, 0, 0, 1
+    halign: "left"
+<CustomButton@MDRaisedButton>
+    md_bg_color: 0, 0, 0, 1
+<AdminWindow>
+    id: main_win
+    orientation: "vertical"
+    MDNavigationLayout:
+        MDNavigationDrawer:
+            id: nav_drawer
+            type: "standard"
+            anchor: "left"
+            MDNavigationDrawerMenu:
+                spacing: 20
+                MDNavigationDrawerHeader:
+                    id: nav_drawer_header
+                    title: "Settings"
+                    title_color: 0, 0, 0, 1
+                    text: "Account Name"
+                    text_color: 0, 0, 0, 1
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+                CustomDrawerItem:
+                    icon: "account"
+                    text: "Edit Profile"
+                    on_release:
+                        root.goto_edit_profile()
+                        nav_drawer.set_state("close")
+                CustomDrawerItem:
+                    icon: "decagram-outline"
+                    text: "Account Settings"
+                    on_release:
+                        root.goto_settings()
+                        nav_drawer.set_state("close")
+                CustomDrawerItem:
+                    icon: "logout"
+                    text: "Logout"
+                    on_release:
+                        root.show_logout_dialog()
+                        nav_drawer.set_state("close")
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+        ScreenManager:
+            id: scrn_mngr
+            Screen:
+                id: main_scrn
+                name: "main_scrn"
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        id: toolbar
+                        title: "Admin Dashboard"
+                        md_bg_color: 0, 0, 0, 1
+                        left_action_items:
+                            [ \
+                            [ \
+                            'menu', lambda x: \
+                            nav_drawer.set_state("open") if nav_drawer.state == "close" \
+                            else nav_drawer.set_state("close") \
+                            ] \
+                            ]
+                    MDBottomNavigation:
+                        first_widget: "manage_user"
+                        selected_color_background: 0, 0, 0, 1
+                        text_color_active: 0, 0, 0, 1
+                        MDBottomNavigationItem:
+                            id: manage_user
+                            name: "manage_user"
+                            text: "Manage Users"
+                            icon: "account"
+                            MDBoxLayout:
+                                orientation: "vertical"
+                                padding: 20, 20
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, .25
+                                    Rectangle:
+                                        size: self.size
+                                        pos: self.pos
+                                MDBoxLayout:
+                                    orientation: "vertical"
+                                    padding: 20, 10
+                                    spacing: 10
+                                    canvas.before:
+                                        RoundedRectangle:
+                                            size: self.size
+                                            pos: self.pos
+                                            radius: [12, 12, 12 ,12]
+                                    GridLayout:
+                                        cols: 10
+                                        size_hint_y: .1
+                                        spacing: 10
+                                        TableHeader:
+                                            text: "ID"
+                                        TableHeader:
+                                            text: "Username"
+                                        TableHeader:
+                                            text: "Password"
+                                        TableHeader:
+                                            text: "First Name"
+                                        TableHeader:
+                                            text: "Last Name"
+                                        TableHeader:
+                                            text: "Date of Birth"
+                                        TableHeader:
+                                            text: "Email"
+                                        TableHeader:
+                                            text: "Phone"
+                                        TableHeader:
+                                            text: "Role"
+                                        TableHeader:
+                                            text: "Active"
+                                    ScrollView:
+                                        GridLayout:
+                                            id: user_table_content
+                                            cols: 10
+                                            spacing: 10
+                                            size_hint_y: None
+                        MDBottomNavigationItem:
+                            id: manage_ticket
+                            name: "manage_trip"
+                            text: "Manage Trip"
+                            icon: "bus"
+                            MDBoxLayout:
+                                orientation: "vertical"
+                                padding: 20, 20
+                                spacing: 20
+                                canvas.before:
+                                    Color:
+                                        rgba: 0, 0, 0, .25
+                                    Rectangle:
+                                        size: self.size
+                                        pos: self.pos
+                                MDBoxLayout:
+                                    orientation: "horizontal"
+                                    spacing: 20
+                                    size_hint_y: .1
+                                    CustomTextField:
+                                        id: trip_location
+                                        mode: "fill"
+                                        hint_text: "Set Location"
+                                    CustomTextField:
+                                        id: trip_price
+                                        size_hint_x: .1
+                                        mode: "fill"
+                                        hint_text: "Set Price"
+                                    CustomButton:
+                                        text: "Add Trip"
+                                        on_release:
+                                            root.add_trip(trip_location.text, trip_price.text)
+                                MDBoxLayout:
+                                    orientation: "vertical"
+                                    padding: 20, 10
+                                    spacing: 10
+                                    canvas.before:
+                                        RoundedRectangle:
+                                            size: self.size
+                                            pos: self.pos
+                                            radius: [12, 12, 12 ,12]
+                                    GridLayout:
+                                        cols: 3
+                                        size_hint_y: .1
+                                        spacing: 10
+                                        TableHeader:
+                                            text: "ID"
+                                        TableHeader:
+                                            text: "Description"
+                                        TableHeader:
+                                            text: "Price"
+                                    ScrollView:
+                                        GridLayout:
+                                            id: trip_table_content
+                                            cols: 3
+                                            size_hint_y: None
+                                            spacing: 10
+            Screen:
+                id: scrn_edit_profile
+                name: "scrn_edit_profile"
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Edit Profile"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items: [['arrow-left-bold', lambda x: root.goto_main_screen()]]
+                    MDBoxLayout:
+                        id: edit_profile_opt
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/4
+                        spacing: 20
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, .25
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+                        CustomTextField:
+                            id: first_name_fld
+                            hint_text: "First Name"
+                        CustomTextField:
+                            id: last_name_fld
+                            hint_text: "Last Name"
+                        CustomTextField:
+                            id: phone_fld
+                            hint_text: "Phone Number"
+                        CustomTextField:
+                            id: email_fld
+                            hint_text: "Email"
+                            helper_text: "Invalid Email Address"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                        CustomTextField:
+                            id: dob_fld
+                            hint_text: "Date of Birth(DD/MM/YYYY)"
+                            on_focus:
+                                root.dob_date_picker()
+                        CustomButton:
+                            text: "Update"
+                            padding: main_win.size[0]/3, 0
+                            size_hint_x: 1
+                            on_release:
+                                root.update_info(first_name_fld.text, last_name_fld.text,
+                                phone_fld.text, email_fld.text, dob_fld.text)
+            Screen:
+                id: scrn_settings
+                name: "scrn_settings"
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Change Password"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items: [['arrow-left-bold', lambda x: root.goto_main_screen()]]
+                    MDBoxLayout:
+                        id: settings_opt
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/4
+                        spacing: 20
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, .25
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+                        CustomTextField:
+                            id: old_pass
+                            hint_text: "Old Password"
+                            helper_text: "Incorrect Password"
+                            helper_text_mode: "on_error"
+                            icon_left: "key-variant"
+                            password: True
+                            on_text:
+                                self.error = False
+                            on_text_validate:
+                                new_pass.focus = True
+                        CustomTextField:
+                            id: new_pass
+                            hint_text: "New Password"
+                            helper_text: "Invalid Password"
+                            helper_text_mode: "on_error"
+                            icon_left: "key-variant"
+                            password: True
+                            on_text:
+                                self.error = False
+                            on_text_validate:
+                                confirm_pass.focus = True
+                        CustomTextField:
+                            id: confirm_pass
+                            hint_text: "Confirm New Password"
+                            helper_text: "Confirm password does not match"
+                            helper_text_mode: "on_error"
+                            icon_left: "key-variant"
+                            password: True
+                            on_text:
+                                self.error = False
+                            on_text_validate:
+                                root.update_password(old_pass.text, new_pass.text, confirm_pass.text)
+                        MDBoxLayout:
+                            orientation: "horizontal"
+                            spacing: 20
+                            CustomButton:
+                                text: "Update"
+                                size_hint_x: .5
+                                on_release:
+                                    root.update_password(old_pass.text, new_pass.text, confirm_pass.text)
+                            CustomButton:
+                                text: "Show Passwords"
+                                size_hint_x: .5
+                                on_release:
+                                    old_pass.password = False if old_pass.password == True else True
+                                    new_pass.password = False if new_pass.password == True else True
+                                    confirm_pass.password = False if confirm_pass.password == True else True
