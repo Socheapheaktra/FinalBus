@@ -292,9 +292,10 @@
                                         on_release:
                                             root.update_password(old_pass.text, new_pass.text, confirm_pass.text)
                                     CustomButton:
-                                        text: "Show Passwords"
+                                        text: "Show Password"
                                         size_hint_x: .5
                                         on_release:
                                             old_pass.password = False if old_pass.password == True else True
                                             new_pass.password = False if new_pass.password == True else True
                                             confirm_pass.password = False if confirm_pass.password == True else True
+                                            self.text = "Hide Password" if self.text == "Show Password" else "Show Password"

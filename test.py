@@ -1,103 +1,57 @@
 from kivy.lang import Builder
 
 from kivymd.app import MDApp
-from kivymd.uix.navigationdrawer import MDNavigationDrawer, MDNavigationDrawerDivider
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.expansionpanel import MDExpansionPanel, MDExpansionPanelThreeLine
+from kivymd import images_path
 
 KV = '''
-#:import get_color_from_hex kivy.utils.get_color_from_hex
+<Content>
+    adaptive_height: True
 
-#:set text_color get_color_from_hex("#4a4939")
-#:set focus_color get_color_from_hex("#e7e4c0")
-#:set ripple_color get_color_from_hex("#c5bdd2")
-#:set bg_color get_color_from_hex("#f7f4e7")
-#:set selected_color get_color_from_hex("#0c6c4d")
+    TwoLineIconListItem:
+        text: "(050)-123-45-67"
+        secondary_text: "Mobile"
 
-
-<DrawerClickableItem@MDNavigationDrawerItem>
-    focus_color: focus_color
-    unfocus_color: bg_color
-    text_color: text_color
-    icon_color: text_color
-    ripple_color: ripple_color
-    selected_color: selected_color
+        IconLeftWidget:
+            icon: 'phone'
 
 
-<DrawerLabelItem@MDNavigationDrawerItem>
-    bg_color: bg_color
-    text_color: text_color
-    icon_color: text_color
-    _no_ripple_effect: True
+ScrollView:
 
-
-MDScreen:
-
-    MDNavigationLayout:
-
-        ScreenManager:
-
-            MDScreen:
-
-                MDToolbar:
-                    title: "Navigation Drawer"
-                    elevation: 10
-                    pos_hint: {"top": 1}
-                    md_bg_color: focus_color
-                    specific_text_color: text_color
-                    left_action_items:
-                        [ \
-                        [ \
-                        'menu', lambda x: \
-                        nav_drawer.set_state("open") \
-                        if nav_drawer.state == "close" else \
-                        nav_drawer.set_state("close") \
-                        ] \
-                        ]
-
-        MDNavigationDrawer:
-            id: nav_drawer
-            radius: (0, 16, 16, 0) if self.anchor == "left" else (16, 0, 0, 16)
-            md_bg_color: bg_color
-
-            MDNavigationDrawerMenu:
-
-                MDNavigationDrawerHeader:
-                    title: "Header title"
-                    title_color: text_color
-                    text: "Header text"
-                    title_color: text_color
-                    spacing: "4dp"
-                    padding: "12dp", 0, 0, "56dp"
-
-                MDNavigationDrawerLabel:
-                    text: "Mail"
-
-                DrawerClickableItem:
-                    icon: "gmail"
-                    right_text: "+99"
-                    text_right_color: text_color
-                    text: "Inbox"
-
-                DrawerClickableItem:
-                    icon: "send"
-                    text: "Outbox"
-
-                MDNavigationDrawerDivider:
-
-                MDNavigationDrawerLabel:
-                    text: "Labels"
-
-                DrawerLabelItem:
-                    icon: "information-outline"
-                    text: "Label"
-
-                DrawerLabelItem:
-                    icon: "information-outline"
-                    text: "Label"
+    MDGridLayout:
+        id: box
+        cols: 1
+        adaptive_height: True
 '''
 
-class TestNavigationDrawer(MDApp):
+
+class Content(MDBoxLayout):
+    '''Custom content.'''
+
+
+class Test(MDApp):
     def build(self):
-        self.theme_cls.primary_palette = "Indigo"
         return Builder.load_string(KV)
 
-TestNavigationDrawer().run()
+    def on_start(self):
+        for i in range(10):
+            self.root.ids.box.add_widget(
+                MDExpansionPanel(
+                    icon=f"{images_path}kivymd.png",
+                    content=Content(),
+                    panel_cls=MDExpansionPanelThreeLine(
+                        text="Text",
+                        secondary_text="Secondary text",
+                        tertiary_text="Tertiary text",
+                    )
+                )
+            )
+
+
+Test().run()
+
+
+# import datetime
+#
+# print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

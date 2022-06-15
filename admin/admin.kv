@@ -11,6 +11,44 @@
     halign: "left"
 <CustomButton@MDRaisedButton>
     md_bg_color: 0, 0, 0, 1
+<BusStatusField>
+    orientation: "horizontal"
+    spacing: 20
+    size_hint_y: None
+    height: textfield.height
+    CustomTextField:
+        id: textfield
+        hint_text: "Status"
+        disabled: True
+    CustomButton:
+        text: "Active"
+        on_release:
+            textfield.text = self.text
+            root.text = self.text
+    CustomButton:
+        text: "Inactive"
+        on_release:
+            textfield.text = self.text
+            root.text = self.text
+<BusTypeField>
+    orientation: "horizontal"
+    spacing: 20
+    size_hint_y: None
+    height: textfield.height
+    CustomTextField:
+        id: textfield
+        hint_text: "Bus Type"
+        disabled: True
+    CustomButton:
+        text: "Express"
+        on_release:
+            textfield.text = self.text
+            root.text = self.text
+    CustomButton:
+        text: "VIP"
+        on_release:
+            textfield.text = self.text
+            root.text = self.text
 <AdminWindow>
     id: main_win
     orientation: "vertical"
@@ -27,8 +65,79 @@
                     title_color: 0, 0, 0, 1
                     text: "Account Name"
                     text_color: 0, 0, 0, 1
+                MDNavigationDrawerLabel:
+                    text: "Manage User"
+                CustomDrawerItem:
+                    icon: "account-plus"
+                    text: "Add User"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_add_user()
+                CustomDrawerItem:
+                    icon: "account"
+                    text: "Update User"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_update_user()
+                CustomDrawerItem:
+                    icon: "account-remove"
+                    text: "Remove User"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_remove_user()
                 MDNavigationDrawerDivider:
                     color: 0, 0, 0, .5
+                MDNavigationDrawerLabel:
+                    text: "Manage Trip"
+                CustomDrawerItem:
+                    icon: "ticket"
+                    text: "Add Trip"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_add_trip()
+                CustomDrawerItem:
+                    icon: "ticket-confirmation"
+                    text: "Update Trip"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_update_trip()
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+                MDNavigationDrawerLabel:
+                    text: "Manage Bus"
+                CustomDrawerItem:
+                    icon: "bus"
+                    text: "Show Bus"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_bus()
+                CustomDrawerItem:
+                    icon: "bus-multiple"
+                    text: "Add Bus"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_add_bus()
+                CustomDrawerItem:
+                    icon: "bus-alert"
+                    text: "Update Bus"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_update_bus()
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+                MDNavigationDrawerLabel:
+                    text: "Transaction"
+                CustomDrawerItem:
+                    icon: "file-table-box-multiple"
+                    text: "Transaction Detail"
+                    on_release:
+                        nav_drawer.set_state("close")
+                        root.goto_transaction()
+                MDNavigationDrawerDivider:
+                    color: 0, 0, 0, .5
+                MDNavigationDrawerLabel:
+                    text: "Others"
+                    bold: True
                 CustomDrawerItem:
                     icon: "account"
                     text: "Edit Profile"
@@ -77,6 +186,8 @@
                             name: "manage_user"
                             text: "Manage Users"
                             icon: "account"
+                            on_tab_release:
+                                root.show_user_table()
                             MDBoxLayout:
                                 orientation: "vertical"
                                 padding: 20, 20
@@ -130,6 +241,8 @@
                             name: "manage_trip"
                             text: "Manage Trip"
                             icon: "bus"
+                            on_tab_release:
+                                root.show_trip_table()
                             MDBoxLayout:
                                 orientation: "vertical"
                                 padding: 20, 20
@@ -141,23 +254,6 @@
                                         size: self.size
                                         pos: self.pos
                                 MDBoxLayout:
-                                    orientation: "horizontal"
-                                    spacing: 20
-                                    size_hint_y: .1
-                                    CustomTextField:
-                                        id: trip_location
-                                        mode: "fill"
-                                        hint_text: "Set Location"
-                                    CustomTextField:
-                                        id: trip_price
-                                        size_hint_x: .1
-                                        mode: "fill"
-                                        hint_text: "Set Price"
-                                    CustomButton:
-                                        text: "Add Trip"
-                                        on_release:
-                                            root.add_trip(trip_location.text, trip_price.text)
-                                MDBoxLayout:
                                     orientation: "vertical"
                                     padding: 20, 10
                                     spacing: 10
@@ -167,7 +263,7 @@
                                             pos: self.pos
                                             radius: [12, 12, 12 ,12]
                                     GridLayout:
-                                        cols: 3
+                                        cols: 5
                                         size_hint_y: .1
                                         spacing: 10
                                         TableHeader:
@@ -176,10 +272,14 @@
                                             text: "Description"
                                         TableHeader:
                                             text: "Price"
+                                        TableHeader:
+                                            text: "Available Seat"
+                                        TableHeader:
+                                            text: "Departure Date"
                                     ScrollView:
                                         GridLayout:
                                             id: trip_table_content
-                                            cols: 3
+                                            cols: 5
                                             size_hint_y: None
                                             spacing: 10
             Screen:
@@ -297,3 +397,247 @@
                                     old_pass.password = False if old_pass.password == True else True
                                     new_pass.password = False if new_pass.password == True else True
                                     confirm_pass.password = False if confirm_pass.password == True else True
+            Screen:
+                id: scrn_add_user
+                name: 'scrn_add_user'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Add User"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDLabel:
+                        text: "Add User"
+                        font_style: "H2"
+                        halign: "center"
+            Screen:
+                id: scrn_update_user
+                name: 'scrn_update_user'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Update User"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDLabel:
+                        text: "Update User"
+                        font_style: "H2"
+                        halign: "center"
+            Screen:
+                id: scrn_remove_user
+                name: 'scrn_remove_user'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Remove User"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDLabel:
+                        text: "Remove User"
+                        font_style: "H2"
+                        halign: "center"
+            Screen:
+                id: scrn_add_trip
+                name: 'scrn_add_trip'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Add Trip"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDLabel:
+                        text: "Add Trip"
+                        font_style: "H2"
+                        halign: "center"
+            Screen:
+                id: scrn_update_trip
+                name: 'scrn_update_trip'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Update Trip"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDLabel:
+                        text: "Update Trip"
+                        font_style: "H2"
+                        halign: "center"
+            Screen:
+                id: scrn_bus
+                name: 'scrn_bus'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Bus Details"
+                        md_bg_color: 0, 0, 0, 1
+                        left_action_items:
+                            [ \
+                            ['menu', lambda x: nav_drawer.set_state("open") \
+                            if nav_drawer.state == "close" \
+                            else nav_drawer.set_state("close")] \
+                            ]
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: 20, 20
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, .25
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            padding: 20, 10
+                            canvas.before:
+                                RoundedRectangle:
+                                    size: self.size
+                                    pos: self.pos
+                                    radius: [12, 12, 12, 12]
+                            GridLayout:
+                                cols: 7
+                                spacing: 10
+                                size_hint_y: .1
+                                TableHeader:
+                                    text: "ID"
+                                TableHeader:
+                                    text: "Name"
+                                TableHeader:
+                                    text: "Type"
+                                TableHeader:
+                                    text: "Desc"
+                                TableHeader:
+                                    text: "Seat"
+                                TableHeader:
+                                    text: "Price"
+                                TableHeader:
+                                    text: "Status"
+                            ScrollView:
+                                GridLayout:
+                                    id: bus_table_content
+                                    cols: 7
+                                    size_hint_y: None
+                                    spacing: 10
+            Screen:
+                id: scrn_add_bus
+                name: 'scrn_add_bus'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    MDTopAppBar:
+                        title: "Add New Bus"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_bus()] \
+                            ]
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/3
+                        spacing: 20
+                        CustomTextField:
+                            id: bus_name_fld
+                            hint_text: "Bus Name"
+                            helper_text: "Please Input Bus Name"
+                            helper_text_mode: "on_error"
+                            focus: True
+                            on_text: self.error = False
+                            on_text_validate: bus_price_fld.focus = True
+                        CustomTextField:
+                            id: bus_price_fld
+                            input_filter: "float"
+                            hint_text: "Price"
+                            helper_text: "Please Input Price"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                        BusTypeField:
+                            id: bus_type_fld
+                        CustomButton:
+                            text: "Add New Bus"
+                            size_hint_x: 1
+                            on_release:
+                                root.add_bus(bus_name_fld.text, bus_price_fld.text, bus_type_fld.text)
+            Screen:
+                id: scrn_update_bus
+                name: 'scrn_update_bus'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    MDTopAppBar:
+                        title: "Update Bus"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_bus()] \
+                            ]
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/3
+                        spacing: 20
+                        CustomTextField:
+                            id: bus_id_fld
+                            input_filter: "int"
+                            hint_text: "Bus ID"
+                            helper_text: "Bus doesn't not exist"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                            on_text_validate:
+                                update_price_fld.focus = True
+                        CustomTextField:
+                            id: update_price_fld
+                            input_filter: "float"
+                            hint_text: "New Price"
+                            helper_text: "Please Input New Price"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                        BusStatusField:
+                            id: bus_status_fld
+                        CustomButton:
+                            text: "Update Bus"
+                            size_hint_x: 1
+                            on_release:
+                                root.update_bus(bus_id_fld.text, update_price_fld.text, bus_status_fld.text)
+            Screen:
+                id: scrn_transaction
+                name: 'scrn_transaction'
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDTopAppBar:
+                        title: "Update Trip"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_main_screen()] \
+                            ]
+                    MDLabel:
+                        text: "Transaction Screen"
+                        font_style: "H2"
+                        halign: "center"
