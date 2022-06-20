@@ -146,7 +146,7 @@
                         nav_drawer.set_state("close")
                 CustomDrawerItem:
                     icon: "decagram-outline"
-                    text: "Account Settings"
+                    text: "Change Password"
                     on_release:
                         root.goto_settings()
                         nav_drawer.set_state("close")
@@ -305,12 +305,19 @@
                         CustomTextField:
                             id: first_name_fld
                             hint_text: "First Name"
+                            focus: True
+                            on_text_validate:
+                                last_name_fld.focus = True
                         CustomTextField:
                             id: last_name_fld
                             hint_text: "Last Name"
+                            on_text_validate:
+                                phone_fld.focus = True
                         CustomTextField:
                             id: phone_fld
                             hint_text: "Phone Number"
+                            on_text_validate:
+                                email_fld.focus = True
                         CustomTextField:
                             id: email_fld
                             hint_text: "Email"
