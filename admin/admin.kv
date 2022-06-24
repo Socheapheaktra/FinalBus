@@ -49,6 +49,25 @@
         on_release:
             textfield.text = self.text
             root.text = self.text
+<UserTypeField>:
+    orientation: "horizontal"
+    spacing: 20
+    size_hint_y: None
+    height: textfield.height
+    CustomTextField:
+        id: textfield
+        hint_text: "User Role"
+        disabled: True
+    CustomButton:
+        text: "Admin"
+        on_release:
+            textfield.text = self.text
+            root.text = self.text
+    CustomButton:
+        text: "User"
+        on_release:
+            textfield.text = self.text
+            root.text = self.text
 <AdminWindow>
     id: main_win
     orientation: "vertical"
@@ -409,6 +428,12 @@
                 name: 'scrn_add_user'
                 MDBoxLayout:
                     orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     MDTopAppBar:
                         title: "Add User"
                         md_bg_color: 0, 0, 0, 1
@@ -416,15 +441,54 @@
                             [ \
                             ['arrow-left-bold', lambda x: root.goto_main_screen()] \
                             ]
-                    MDLabel:
-                        text: "Add User"
-                        font_style: "H2"
-                        halign: "center"
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/3
+                        spacing: 20
+                        CustomTextField:
+                            id: add_username_fld
+                            hint_text: "Username"
+                            helper_text: "Username already taken"
+                            helper_text_mode: "on_error"
+                            focus: True
+                            on_text:
+                                self.error = False
+                            on_text_validate:
+                                add_password_fld.focus = True
+                        CustomTextField:
+                            id: add_password_fld
+                            hint_text: "Password"
+                            helper_text: "Invalid Password"
+                            helper_text_mode: "on_error"
+                            password: True
+                            on_text:
+                                self.error = False
+                            on_text_validate:
+                                add_email_fld.focus = True
+                        CustomTextField:
+                            id: add_email_fld
+                            hint_text: "Email"
+                            helper_text: "This Email has already been used"
+                            helper_text_mode: "on_error"
+                            on_text:
+                                self.error = False
+                            on_text_validate:
+                                self.focus = False
+                        CustomButton:
+                            text: "Add User"
+                            on_release:
+                                root.add_user(add_username_fld.text, add_password_fld.text, add_email_fld.text)
             Screen:
                 id: scrn_update_user
                 name: 'scrn_update_user'
                 MDBoxLayout:
                     orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     MDTopAppBar:
                         title: "Update User"
                         md_bg_color: 0, 0, 0, 1
@@ -432,15 +496,60 @@
                             [ \
                             ['arrow-left-bold', lambda x: root.goto_main_screen()] \
                             ]
-                    MDLabel:
-                        text: "Update User"
-                        font_style: "H2"
-                        halign: "center"
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/3
+                        spacing: 20
+                        CustomTextField:
+                            id: update_username_fld
+                            hint_text: "Username"
+                            helper_text: "Invalid Username"
+                            helper_text_mode: "on_error"
+                            focus: True
+                            on_text: self.error = False
+                            on_text_validate:
+                                update_password_fld.focus = True
+                        CustomTextField:
+                            id: update_password_fld
+                            password: True
+                            hint_text: "New Password"
+                            helper_text: "Invalid Password"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                            on_text_validate:
+                                update_email_fld.focus = True
+                        CustomTextField:
+                            id: update_email_fld
+                            hint_text: "Set Email"
+                            helper_text: "Invalid Email Address"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                            on_text_validate:
+                                update_phone_fld.focus = True
+                        CustomTextField:
+                            id: update_phone_fld
+                            input_filter: "int"
+                            hint_text: "Set Phone Number"
+                        UserTypeField:
+                            id: update_role_fld
+                        CustomButton:
+                            text: "Update"
+                            size_hint_y: 1
+                            on_release:
+                                root.update_user(update_username_fld.text, update_password_fld.text,
+                                update_email_fld.text, update_phone_fld.text, update_role_fld.text)
+
             Screen:
                 id: scrn_remove_user
                 name: 'scrn_remove_user'
                 MDBoxLayout:
                     orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     MDTopAppBar:
                         title: "Remove User"
                         md_bg_color: 0, 0, 0, 1
@@ -448,10 +557,23 @@
                             [ \
                             ['arrow-left-bold', lambda x: root.goto_main_screen()] \
                             ]
-                    MDLabel:
-                        text: "Remove User"
-                        font_style: "H2"
-                        halign: "center"
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        spacing: 20
+                        padding: main_win.size[0]/4, main_win.size[1]/3
+                        CustomTextField:
+                            id: remove_username_fld
+                            hint_text: "Username"
+                            focus: True
+                            helper_text: "Username does not exists!"
+                            helper_text_mode: "on_error"
+                            on_text: self.error = False
+                            on_text_validate:
+                                root.remove_user_dialog(remove_username_fld.text)
+                        CustomButton:
+                            text: "Remove User"
+                            on_release:
+                                root.remove_user_dialog(remove_username_fld.text)
             Screen:
                 id: scrn_add_trip
                 name: 'scrn_add_trip'

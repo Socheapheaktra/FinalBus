@@ -23,6 +23,11 @@ class BusTypeField(MDBoxLayout):
         super().__init__(**kwargs)
         self.text = StringProperty()
 
+class UserTypeField(MDBoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.text = StringProperty()
+
 class AdminWindow(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -183,18 +188,197 @@ class AdminWindow(MDBoxLayout):
         else:
             pass
 
-    #FIXME
-    def add_user(self):
-        pass
+    #FIXME (DONE)
+    def add_user(self, username, password, email):
+        #GET REGISTERED USERNAMES AND EMAILS
+        username_ls = []
+        email_ls = []
+        sql = 'SELECT user_name, email FROM users'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        for x in result:
+            username_ls.append(x[0])
+            email_ls.append(x[1])
+        if username in username_ls:
+            self.ids.add_username_fld.error = True
+        elif password == "":
+            self.ids.add_password_fld.error = True
+        else:
+            if email == "":
+                self.ids.add_email_fld.helper_text = "Invalid Email"
+                self.ids.add_email_fld.error = True
+            elif email in email_ls:
+                self.ids.add_email_fld.helper_text = "This Email has already been used"
+                self.ids.add_email_fld.error = True
+            else:
+                try:
+                    sql = 'INSERT INTO users (user_name, user_pass, email) ' \
+                          'VALUES (%s, %s, %s)'
+                    values = [username, password, email, ]
+                    self.mycursor.execute(sql, values)
+                    self.mydb.commit()
+                except:
+                    self.dialog = MDDialog(
+                        title="Error!",
+                        text="Cannot add new account",
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+                else:
+                    self.dialog = MDDialog(
+                        title="Success!",
+                        text="New account added successfully!",
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+
+    #FIXME (DONE)
+    def update_user(self, username, password, email, phone, role):
+        username_list = []
+        role_list = ['Admin', 'User']
+        sql = 'SELECT user_name FROM users'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        for x in result:
+            username_list.append(x[0])
+        if username not in username_list:
+            self.ids.update_username_fld.error = True
+        else:
+            if password != "":
+                u_pass = password
+            else:
+                sql = 'SELECT user_pass FROM users WHERE user_name = %s'
+                values = [username, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                u_pass = result[0]
+            if email != "":
+                u_email = email
+            else:
+                sql = 'SELECT email FROM users WHERE user_name = %s'
+                values = [username, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                u_email = result[0]
+        if phone == "":
+            u_phone = None
+        else:
+            u_phone = phone
+        if role not in role_list:
+            self.dialog = MDDialog(
+                title="Please Select A Role!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            u_role = role
+            try:
+                sql = 'UPDATE users SET user_pass=%s, email=%s, phone=%s, user_desc=%s ' \
+                      'WHERE user_name=%s'
+                values = [u_pass, u_email, u_phone, u_role, username, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+            except:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text="Cannot Update User Info!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text=f"User {username} has been updated successfully!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+
+    #FIXME (DONE)
+    def remove_user_dialog(self, username):
+        username_list = []
+        sql = 'SELECT user_name FROM users'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        for x in result:
+            username_list.append(x[0])
+        if username not in username_list:
+            self.ids.remove_username_fld.error = True
+        else:
+            self.dialog = MDDialog(
+                title="Please Confirm!",
+                text=f"Are you sure you want to remove user {username}?",
+                buttons=[
+                    MDFlatButton(
+                        text="No",
+                        on_release=self.close_dialog
+                    ),
+                    MDFlatButton(
+                        text="Yes",
+                        on_release=lambda x: self.remove_user(username)
+                    )
+                ]
+            )
+            self.dialog.open()
 
     #FIXME
-    def update_user(self):
-        pass
+    def remove_user(self, username):
+        self.close_dialog()
+        try:
+            sql = 'DELETE FROM users WHERE user_name=%s'
+            values = [username, ]
+            self.mycursor.execute(sql, values)
+            self.mydb.commit()
+        except:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"Cannot remove user {username}!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            self.dialog = MDDialog(
+                title="Success!",
+                text=f"User {username} has been removed!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
 
-    #FIXME
-    def remove_user(self):
-        pass
-
+    #FIXME (DONE)
     def add_bus(self, name, price, bus_type):
         bus_type_list = ["Express", "VIP"]
         if name == "" or price == "":
@@ -249,6 +433,7 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
+    #FIXME (DONE)
     def update_bus(self, bus_id, price, bus_status):
         status_list = ["Active", "Inactive"]
         id_list = []
@@ -482,14 +667,23 @@ class AdminWindow(MDBoxLayout):
         self.ids.scrn_mngr.current = "scrn_settings"
 
     def goto_add_user(self):
+        self.ids.add_username_fld.text = ""
+        self.ids.add_password_fld.text = ""
+        self.ids.add_email_fld.text = ""
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_add_user"
 
     def goto_update_user(self):
+        self.ids.update_username_fld.text = ""
+        self.ids.update_password_fld.text = ""
+        self.ids.update_email_fld.text = ""
+        self.ids.update_phone_fld.text = ""
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_update_user"
 
     def goto_remove_user(self):
+        self.ids.remove_username_fld.text = ""
+        self.ids.remove_username_fld.error = False
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_remove_user"
 
