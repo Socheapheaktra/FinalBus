@@ -210,6 +210,7 @@
                             MDBoxLayout:
                                 orientation: "vertical"
                                 padding: 20, 20
+                                spacing: 20
                                 canvas.before:
                                     Color:
                                         rgba: 0, 0, 0, .25
@@ -255,6 +256,27 @@
                                             cols: 10
                                             spacing: 10
                                             size_hint_y: None
+                                MDBoxLayout:
+                                    orientation: "horizontal"
+                                    spacing: 20
+                                    size_hint_y: None
+                                    height: btn_add_user.height
+                                    CustomButton:
+                                        id: btn_add_user
+                                        text: "Add User"
+                                        size_hint_x: .3
+                                        on_release:
+                                            root.goto_add_user()
+                                    CustomButton:
+                                        text: "Update User"
+                                        size_hint_x: .3
+                                        on_release:
+                                            root.goto_update_user()
+                                    CustomButton:
+                                        text: "Remove User"
+                                        size_hint_x: .3
+                                        on_release:
+                                            root.goto_remove_user()
                         MDBottomNavigationItem:
                             id: manage_ticket
                             name: "manage_trip"
@@ -579,6 +601,12 @@
                 name: 'scrn_add_trip'
                 MDBoxLayout:
                     orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     MDTopAppBar:
                         title: "Add Trip"
                         md_bg_color: 0, 0, 0, 1
@@ -586,10 +614,60 @@
                             [ \
                             ['arrow-left-bold', lambda x: root.goto_main_screen()] \
                             ]
-                    MDLabel:
-                        text: "Add Trip"
-                        font_style: "H2"
-                        halign: "center"
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: main_win.size[0]/4, main_win.size[1]/3
+                        spacing: 20
+                        MDBoxLayout:
+                            orientation: "horizontal"
+                            spacing: 20
+                            size_hint_y: None
+                            height: add_trip_location_fld.height
+                            CustomTextField:
+                                id: add_trip_location_fld
+                                hint_text: "Choose Location"
+                            MDIconButton:
+                                icon: "arrow-down-drop-circle-outline"
+                                on_release:
+                                    root.open_location_menu()
+                        MDBoxLayout:
+                            orientation: "horizontal"
+                            spacing: 20
+                            size_hint_y: None
+                            height: add_trip_bus_fld.height
+                            CustomTextField:
+                                id: add_trip_bus_fld
+                                hint_text: "Choose Bus"
+                            MDIconButton:
+                                icon: "arrow-down-drop-circle-outline"
+                                on_release:
+                                    root.open_bus_menu()
+                        MDBoxLayout:
+                            orientation: "horizontal"
+                            spacing: 20
+                            size_hint_y: None
+                            height: add_trip_departure_date_fld.height
+                            TwoLineListItem:
+                                id: add_trip_departure_date_fld
+                                text: "Departure Date"
+                                secondary_text: "Add Departure Date"
+                                on_release:
+                                    root.departure_date_picker()
+                            MDBoxLayout:
+                                orientation: "horizontal"
+                                spacing: 20
+                                size_hint_y: None
+                                height: add_trip_departure_time_fld.height
+                                CustomTextField:
+                                    id: add_trip_departure_time_fld
+                                    hint_text: "Choose Departure Time"
+                                MDIconButton:
+                                    icon: "arrow-down-drop-circle-outline"
+                                    on_release:
+                                        root.open_departure_time_menu()
+                        CustomButton:
+                            text: "Add Trip"
+                            size_hint_x: 1
             Screen:
                 id: scrn_update_trip
                 name: 'scrn_update_trip'
@@ -627,6 +705,7 @@
                     MDBoxLayout:
                         orientation: "vertical"
                         padding: 20, 20
+                        spacing: 20
                         canvas.before:
                             Color:
                                 rgba: 0, 0, 0, .25
@@ -665,6 +744,21 @@
                                     cols: 7
                                     size_hint_y: None
                                     spacing: 10
+                        MDBoxLayout:
+                            orientation: "horizontal"
+                            spacing: 20
+                            size_hint_y: None
+                            height: btn_add_user.height
+                            CustomButton:
+                                text: "Add Bus"
+                                size_hint_x: .5
+                                on_release:
+                                    root.goto_add_bus()
+                            CustomButton:
+                                text: "Update Bus"
+                                size_hint_x: .5
+                                on_release:
+                                    root.goto_update_bus()
             Screen:
                 id: scrn_add_bus
                 name: 'scrn_add_bus'

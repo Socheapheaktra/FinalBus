@@ -4,7 +4,9 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.pickers import MDDatePicker
+from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.button import MDIconButton
 
 from kivy.properties import StringProperty
 
@@ -41,6 +43,8 @@ class AdminWindow(MDBoxLayout):
 
         self.dialog = None
         self.dob_date = None
+        self.departure_date = None
+        self.menu = None
 
         self.show_user_table()
 
@@ -345,7 +349,7 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
 
-    #FIXME
+    #FIXME (DONE)
     def remove_user(self, username):
         self.close_dialog()
         try:
@@ -501,6 +505,141 @@ class AdminWindow(MDBoxLayout):
     def add_trip(self, location, price):
         pass
 
+    def open_location_menu(self):
+        sql = 'SELECT loc_name FROM locations'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        items = list()
+        for x in result:
+            items.append(
+                {
+                    "text": f"{x[0]}",
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x=f"{x[0]}": self.set_trip_location(x)
+                }
+            )
+        self.menu = MDDropdownMenu(
+            caller=self.ids.add_trip_location_fld,
+            items=items,
+            width_mult=4,
+            ver_growth="down",
+            hor_growth="right",
+        )
+        self.menu.open()
+
+    def set_trip_location(self, location):
+        self.ids.add_trip_location_fld.text = location
+        self.ids.add_trip_location_fld.focus = False
+        self.ids.add_trip_bus_fld.text = ""
+        self.menu.dismiss()
+
+    def open_bus_menu(self):
+        sql = 'SELECT loc_name FROM locations'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        location_list = list()
+        items = list()
+        for location in result:
+            location_list.append(location[0])
+        if self.ids.add_trip_location_fld.text == location_list[0]:
+            sql = 'SELECT bus_name FROM bus WHERE id IN (1,2,3)'
+            self.mycursor.execute(sql)
+            result = self.mycursor.fetchall()
+            for x in result:
+                items.append(
+                    {
+                        "text": f"{x[0]}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                    }
+                )
+        elif self.ids.add_trip_location_fld.text == location_list[1]:
+            sql = 'SELECT bus_name FROM bus WHERE id IN (7,8,9)'
+            self.mycursor.execute(sql)
+            result = self.mycursor.fetchall()
+            for x in result:
+                items.append(
+                    {
+                        "text": f"{x[0]}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                    }
+                )
+        elif self.ids.add_trip_location_fld.text == location_list[2]:
+            sql = 'SELECT bus_name FROM bus WHERE id IN (4,5,6)'
+            self.mycursor.execute(sql)
+            result = self.mycursor.fetchall()
+            for x in result:
+                items.append(
+                    {
+                        "text": f"{x[0]}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                    }
+                )
+        elif self.ids.add_trip_location_fld.text == location_list[3]:
+            sql = 'SELECT bus_name FROM bus WHERE id IN (10,11,12)'
+            self.mycursor.execute(sql)
+            result = self.mycursor.fetchall()
+            for x in result:
+                items.append(
+                    {
+                        "text": f"{x[0]}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                    }
+                )
+        else:
+            sql = 'SELECT bus_name FROM bus'
+            self.mycursor.execute(sql)
+            result = self.mycursor.fetchall()
+            for x in result:
+                items.append(
+                    {
+                        "text": f"{x[0]}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                    }
+                )
+        self.menu = MDDropdownMenu(
+            caller=self.ids.add_trip_bus_fld,
+            items=items,
+            width_mult=4,
+            ver_growth="down",
+            hor_growth="right",
+        )
+        self.menu.open()
+
+    def set_trip_bus(self, bus):
+        self.ids.add_trip_bus_fld.text = bus
+        self.ids.add_trip_bus_fld.focus = False
+        self.menu.dismiss()
+
+    def open_departure_time_menu(self):
+        time_list = ['8:00:00', '14:00:00', "17:00:00"]
+        items = list()
+        for time in time_list:
+            items.append(
+                {
+                    "text": f"{time}",
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x=f"{time}": self.set_trip_departure_time(x)
+                }
+            )
+        self.menu = MDDropdownMenu(
+            caller=self.ids.add_trip_departure_time_fld,
+            items=items,
+            width_mult=4,
+            ver_growth="down",
+            hor_growth="right",
+        )
+        self.menu.open()
+
+    def set_trip_departure_time(self, time):
+        self.ids.add_trip_departure_time_fld.text = time
+        self.ids.add_trip_departure_time_fld.focus = False
+        self.menu.dismiss()
+
     #FIXME
     def update_trip(self):
         pass
@@ -639,6 +778,23 @@ class AdminWindow(MDBoxLayout):
     def close_dob_date_picker(self, instance, value):
         self.dob_date.dismiss(force=True)
 
+    def departure_date_picker(self):
+        self.departure_date = MDDatePicker(
+            primary_color=(0,0,0,1),
+            selector_color=(0,0,0,1),
+            text_button_color=(0,0,0,1),
+            text_current_color=(0,0,0,1)
+        )
+        self.departure_date.bind(on_save=self.save_departure_date, on_cancel=self.close_departure_date_picker)
+        self.departure_date.open()
+
+    def save_departure_date(self, instance, value, date_range):
+        date = value.strftime("%d-%m-%Y")
+        self.ids.add_trip_departure_date_fld.secondary_text = str(date)
+
+    def close_departure_date_picker(self, instance, value):
+        self.departure_date.dismiss(force=True)
+
     def goto_main_screen(self):
         self.show_user_table()
         self.ids.scrn_mngr.transition.direction = "right"
@@ -688,6 +844,10 @@ class AdminWindow(MDBoxLayout):
         self.ids.scrn_mngr.current = "scrn_remove_user"
 
     def goto_add_trip(self):
+        self.ids.add_trip_location_fld.text = ""
+        self.ids.add_trip_bus_fld.text = ""
+        self.ids.add_trip_departure_date_fld.secondary_text = ""
+        self.ids.add_trip_departure_time_fld.text = ""
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_add_trip"
 
