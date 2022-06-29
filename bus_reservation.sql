@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jun 20, 2022 at 07:26 AM
+-- Generation Time: Jun 29, 2022 at 08:42 AM
 -- Server version: 5.7.26
 -- PHP Version: 7.2.18
 
@@ -78,19 +78,25 @@ CREATE TABLE IF NOT EXISTS `bus` (
   `status` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `fk_bus_bus_type_type_id` (`type_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `bus`
 --
 
 INSERT INTO `bus` (`id`, `type_id`, `bus_name`, `bus_desc`, `num_of_seat`, `price_per_seat`, `created_date`, `status`) VALUES
-(1, 1, 'PP-SR-Express', 'Morning', 15, 7, '2022-06-15 12:40:57', 1),
-(2, 1, 'PP-SR-Express', 'Afternoon', 15, 7, '2022-06-15 12:41:14', 1),
-(3, 2, 'PP-SR-VIP', 'Evening', 15, 10, '2022-06-15 12:42:05', 0),
-(4, 1, 'PP-SHV-Express', 'Morning', 15, 7, '2022-06-15 12:42:46', 1),
-(5, 1, 'PP-SHV-Express', 'Afternoon', 15, 7, '2022-06-15 12:42:54', 1),
-(6, 2, 'PP-SHV-VIP', 'Evening', 15, 10, '2022-06-15 12:43:13', 0);
+(1, 1, 'PP-SR-Express-1', NULL, 15, 7, '2022-06-15 12:40:57', 1),
+(2, 1, 'PP-SR-Express-2', NULL, 15, 7, '2022-06-15 12:41:14', 1),
+(3, 2, 'PP-SR-VIP', NULL, 15, 10, '2022-06-15 12:42:05', 1),
+(4, 1, 'PP-SHV-Express-1', NULL, 15, 7, '2022-06-15 12:42:46', 1),
+(5, 1, 'PP-SHV-Express-2', NULL, 15, 7, '2022-06-15 12:42:54', 1),
+(6, 2, 'PP-SHV-VIP', NULL, 15, 10, '2022-06-15 12:43:13', 1),
+(7, 1, 'SR-PP-Express-1', NULL, 15, 7, '2022-06-26 23:06:29', 1),
+(8, 1, 'SR-PP-Express-2', NULL, 15, 7, '2022-06-26 23:06:34', 1),
+(9, 2, 'SR-PP-VIP', NULL, 15, 10, '2022-06-26 23:06:51', 1),
+(10, 1, 'SHV-PP-Express-1', NULL, 15, 7, '2022-06-26 23:07:06', 1),
+(11, 1, 'SHV-PP-Express-2', NULL, 15, 7, '2022-06-26 23:07:08', 1),
+(12, 2, 'SHV-PP-VIP', NULL, 15, 10, '2022-06-26 23:07:21', 1);
 
 -- --------------------------------------------------------
 
@@ -143,6 +149,28 @@ INSERT INTO `locations` (`loc_id`, `loc_name`, `created_date`, `status`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `role`
+--
+
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE IF NOT EXISTS `role` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `role_name` varchar(255) NOT NULL,
+  `role_desc` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `role`
+--
+
+INSERT INTO `role` (`id`, `role_name`, `role_desc`) VALUES
+(1, 'Admin', NULL),
+(2, 'User', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `trip`
 --
 
@@ -160,7 +188,15 @@ CREATE TABLE IF NOT EXISTS `trip` (
   PRIMARY KEY (`id`),
   KEY `fk_trip_locations_loc_id` (`loc_id`),
   KEY `fk_trip_bus_id_bus_id` (`bus_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `trip`
+--
+
+INSERT INTO `trip` (`id`, `loc_id`, `bus_id`, `description`, `seat`, `departure_date`, `departure_time`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, NULL, 15, '2022-06-29', '08:00:00', '2022-06-28 12:32:01', '2022-06-29 15:41:09'),
+(2, 1, 2, NULL, 15, '2022-06-29', '14:00:00', '2022-06-29 15:06:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -173,6 +209,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_name` varchar(255) DEFAULT NULL,
   `user_pass` varchar(255) DEFAULT NULL,
+  `role_id` int(11) NOT NULL DEFAULT '2',
   `first_name` varchar(255) DEFAULT NULL,
   `last_name` varchar(255) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
@@ -182,21 +219,19 @@ CREATE TABLE IF NOT EXISTS `users` (
   `created_date` date DEFAULT NULL,
   `status` int(11) DEFAULT '1',
   PRIMARY KEY (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_id`, `user_name`, `user_pass`, `first_name`, `last_name`, `date_of_birth`, `user_desc`, `phone`, `email`, `created_date`, `status`) VALUES
-(1, 'socheapheaktra', 'pheaktra123', 'Doung', 'Socheapheaktra', '2001-01-23', 'User', '092605441', 'socheapheaktra@gmail.com', '2022-04-09', 1),
-(2, 'socheapheaktra_test', 'pheaktra123', 'Socheapheaktra', 'Test', NULL, 'User', NULL, 'socheapheaktra_test@gmail.com', '2022-04-11', 1),
-(7, 'test_user', '123456789', NULL, NULL, NULL, 'User', NULL, 'test_test@gmail.com', '2022-04-04', 1),
-(4, 'admin', 'admin', NULL, NULL, NULL, 'Admin', NULL, 'socheapheaktra_admin@gmail.com', '2022-04-20', 1),
-(6, 'socheapheaktra123', 'pheaktra123', NULL, NULL, NULL, 'User', NULL, 'socheapheaktra@gmail.com', '2022-04-25', 1),
-(8, 'test', 'test', NULL, NULL, NULL, 'User', NULL, 'test@test.com', '2022-05-25', 1),
-(9, 'asdfa', 'test', NULL, NULL, NULL, 'User', NULL, 'test@test.comasdfa', '2022-05-25', 1),
-(10, 'asdfasdfa', 'asdfasdfa', NULL, NULL, NULL, 'User', NULL, 'asdfasdfasdfa', '2022-05-25', 1);
+INSERT INTO `users` (`user_id`, `user_name`, `user_pass`, `role_id`, `first_name`, `last_name`, `date_of_birth`, `user_desc`, `phone`, `email`, `created_date`, `status`) VALUES
+(1, 'socheapheaktra', 'pheaktra123', 2, 'Doung', 'Socheapheaktra', '2001-01-23', 'User', '092605441', 'socheapheaktra@gmail.com', '2022-04-09', 1),
+(2, 'socheapheaktra_test', 'pheaktra123', 2, 'Socheapheaktra', 'Test', NULL, 'User', NULL, 'socheapheaktra_test@gmail.com', '2022-04-11', 1),
+(7, 'test_user', '123456', 2, NULL, NULL, NULL, 'User', NULL, 'test@test.com', '2022-04-04', 1),
+(4, 'admin', 'admin', 1, NULL, NULL, NULL, 'Admin', NULL, 'socheapheaktra_admin@gmail.com', '2022-04-20', 1),
+(6, 'socheapheaktra123', 'pheaktra123', 2, NULL, NULL, NULL, 'User', NULL, 'socheapheaktra@gmail.com', '2022-04-25', 1),
+(11, 'socheapheaktra1', 'pheaktra123', 2, NULL, NULL, NULL, 'User', NULL, 'socheapheaktra1@gmail.com', NULL, 1);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
