@@ -16,6 +16,44 @@
             text: root.text
             font_style: "H5"
             bold: True
+<BusTicket>
+    radius: [6, 6, 6 ,6]
+    style: "elevated"
+    elevation: 6
+    padding: 100, 20
+    size_hint_y: None
+    GridLayout:
+        id: trip_content
+        cols: 3
+        spacing: 20
+        MDLabel:
+            text: "Departure Date"
+        MDLabel:
+            text: "Departure Time"
+        MDLabel:
+            text: "Price"
+        MDLabel:
+            text: root.departure_date
+        MDLabel:
+            text: root.departure_time
+        MDLabel:
+            text: "USD " + root.price
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: self.minimum_height
+            MDIcon:
+                icon: "bus"
+            MDLabel:
+                text: root.bus_name
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: self.minimum_height
+            MDIcon:
+                icon: "car-seat"
+            MDLabel:
+                text: root.seat
 <CustomTextField>
     icon_left_color: 0, 0, 0, 1
     icon_left_color_normal: 0, 0, 0, 1
@@ -144,6 +182,8 @@
                                             CustomButton:
                                                 text: "Search"
                                                 size_hint_x: 1
+                                                on_release:
+                                                    root.search_tickets(location_fld.text, departure_fld.secondary_text)
                                         MDLabel:
                                             text: ""
                                 Screen:
@@ -157,6 +197,27 @@
                                             size_hint_y: None
                                             height: self.minimum_height
                                             padding: 50, 10
+                                Screen:
+                                    id: scrn_search_ticket
+                                    name: "scrn_search_ticket"
+                                    MDBoxLayout:
+                                        orientation: "vertical"
+                                        spacing: 20
+                                        padding: 50, 10
+                                        MDLabel:
+                                            id: search_count
+                                            text: "No Result"
+                                            bold: True
+                                            size_hint_y: None
+                                            height: 30
+                                        ScrollView:
+                                            MDBoxLayout:
+                                                id: search_ticket_detail
+                                                orientation: "vertical"
+                                                spacing: 20
+                                                size_hint_y: None
+                                                height: self.minimum_height
+                                                padding: 50, 10
                         MDBottomNavigationItem:
                             id: ticket
                             name: "ticket"

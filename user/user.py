@@ -3,11 +3,14 @@ from kivy.lang.builder import Builder
 from kivymd.uix.list import OneLineListItem
 from kivymd.uix.card import MDCard
 from kivy.properties import StringProperty
+from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.button import MDFlatButton
 from kivymd.toast import toast
+from kivymd.uix.label import MDLabel
+from kivymd.uix.behaviors import RectangularElevationBehavior, TouchBehavior
 
 import mysql.connector
 
@@ -16,6 +19,13 @@ Builder.load_file("user/user.kv")
 class OptionCard(MDCard):
     icon = StringProperty(None)
     text = StringProperty(None)
+
+class BusTicket(MDCard, RectangularElevationBehavior, ButtonBehavior):
+    departure_date = StringProperty(None)
+    departure_time = StringProperty(None)
+    seat = StringProperty(None)
+    price = StringProperty(None)
+    bus_name = StringProperty(None)
 
 class CustomTextField(MDTextField):
     pass
@@ -49,15 +59,81 @@ class UserWindow(MDBoxLayout):
     def booking_home(self):
         self.ids.scrn_booking_mngr.transition.direction = "down"
         self.ids.scrn_booking_mngr.current = "scrn_booking_home"
+        self.ids.toolbar.title = "Booking"
         self.ids.toolbar.right_action_items = []
 
     def booking_location(self):
         self.set_list_locations()
         self.ids.scrn_booking_mngr.transition.direction = "up"
         self.ids.scrn_booking_mngr.current = "scrn_booking_location"
+        self.ids.toolbar.title = "Choose Location"
         self.ids.toolbar.right_action_items = [
             ['arrow-left-bold', lambda x: self.booking_home()]
         ]
+
+    def booking_ticket(self):
+        self.ids.scrn_booking_mngr.transition.direction = "up"
+        self.ids.scrn_booking_mngr.current = "scrn_search_ticket"
+        self.ids.toolbar.title = "Search"
+        self.ids.toolbar.right_action_items = [
+            ['arrow-left-bold', lambda x: self.booking_home()]
+        ]
+
+    #FIXME: Let User Choose How many Seat They want after clicking on a trip
+    def search_tickets(self, location, depart_date):
+        #Check for requirements
+        if location == "" or depart_date == "":
+            self.dialog = MDDialog(
+                title="Missing Requirement!",
+                text="Please Input Location and Departure Date to continue!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            #Get Location ID
+            sql = 'SELECT loc_id FROM locations WHERE loc_name=%s'
+            values = [location, ]
+            self.mycursor.execute(sql, values)
+            result = self.mycursor.fetchone()
+            loc_id = result[0]
+
+            #Get Departure Date
+            temp = depart_date.split("-")
+            temp.reverse()
+            date = "-".join(temp)
+
+            #Get Trip Detail
+            sql = 'SELECT trip.id, trip.departure_date, trip.departure_time, trip.seat, bus.price, bus.bus_name ' \
+                  'FROM trip ' \
+                  'INNER JOIN bus ON trip.bus_id = bus.id ' \
+                  'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+                  'WHERE trip.loc_id=%s AND trip.departure_date=%s'
+            values = [loc_id, date, ]
+            self.mycursor.execute(sql, values)
+            result = self.mycursor.fetchall()
+            if not result:
+                self.ids.search_count.text = "No Result"
+                self.booking_ticket()
+            else:
+                count = self.mycursor.rowcount
+                self.ids.search_ticket_detail.clear_widgets()
+                self.ids.search_count.text = f"{count} trips found"
+                for x in result:
+                    self.ids.search_ticket_detail.add_widget(
+                        BusTicket(
+                            departure_date=f"{x[1]}",
+                            departure_time=f"{x[2]}",
+                            seat=f"{x[3]}",
+                            price=f"{x[4]}",
+                            bus_name=f"{x[5]}"
+                        )
+                    )
+                self.booking_ticket()
 
     def set_list_locations(self):
         """ Show Location Menu """
@@ -311,3 +387,11 @@ class UserWindow(MDBoxLayout):
         self.parent.parent.transition.direction = "right"
         self.parent.parent.current = "scrn_login"
         self.close_dialog()
+
+    def show_trip_detail(self, trip_id, depart_date, depart_time, seat, price, bus):
+        print(f"Trip ID: {trip_id}")
+        print(f"Date: {depart_date}")
+        print(f"Time: {depart_time}")
+        print(f"Price: {price}")
+        print(f"Bus: {bus}")
+        print(f"Seat: {seat}")

@@ -20,10 +20,16 @@ class BusStatusField(MDBoxLayout):
         super().__init__(**kwargs)
         self.text = StringProperty()
 
+    def reset(self):
+        self.ids.textfield.text = ""
+
 class BusTypeField(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.text = StringProperty()
+
+    def reset(self):
+        self.ids.textfield.text = ""
 
 class UserTypeField(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -47,7 +53,6 @@ class AdminWindow(MDBoxLayout):
         self.menu = None
 
         self.show_user_table()
-        self.open_trip_menu()
 
     def show_user_table(self):
         self.ids.user_table_content.clear_widgets()
@@ -730,7 +735,7 @@ class AdminWindow(MDBoxLayout):
             self.ids.update_trip_departure_time_fld.focus = False
         self.menu.dismiss()
 
-    #FIXME
+    #FIXME (DONE)
     def update_trip(self, trip_id, depart_date, depart_time):
         # Check if user has input in all field
         if trip_id == "" or depart_date == "" or depart_time == "":
@@ -1086,10 +1091,16 @@ class AdminWindow(MDBoxLayout):
         self.show_bus_table()
 
     def goto_add_bus(self):
+        self.ids.bus_name_fld.text = ""
+        self.ids.bus_price_fld.text = ""
+        self.ids.bus_type_fld.reset()
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_add_bus"
 
     def goto_update_bus(self):
+        self.ids.bus_id_fld.text = ""
+        self.ids.update_price_fld.text = ""
+        self.ids.bus_status_fld.reset()
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_update_bus"
 
