@@ -47,6 +47,7 @@ class AdminWindow(MDBoxLayout):
         self.menu = None
 
         self.show_user_table()
+        self.open_trip_menu()
 
     def show_user_table(self):
         self.ids.user_table_content.clear_widgets()
@@ -66,7 +67,7 @@ class AdminWindow(MDBoxLayout):
 
     def show_trip_table(self):
         self.ids.trip_table_content.clear_widgets()
-        sql = 'SELECT trip.id, locations.loc_name, bus.price_per_seat, trip.seat, trip.departure_date ' \
+        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price_per_seat, trip.seat, trip.departure_date, trip.departure_time ' \
               'FROM trip ' \
               'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
               'INNER JOIN bus ON trip.bus_id = bus.id'
@@ -90,14 +91,14 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.ids.trip_table_content.add_widget(
                     MDLabel(
-                        text=f"$ {x[2]}",
+                        text=f"{x[2]}",
                         size_hint_y=None,
                         height=50
                     )
                 )
                 self.ids.trip_table_content.add_widget(
                     MDLabel(
-                        text=f"{x[3]}",
+                        text=f"$ {x[3]}",
                         size_hint_y=None,
                         height=50
                     )
@@ -105,6 +106,20 @@ class AdminWindow(MDBoxLayout):
                 self.ids.trip_table_content.add_widget(
                     MDLabel(
                         text=f"{x[4]}",
+                        size_hint_y=None,
+                        height=50
+                    )
+                )
+                self.ids.trip_table_content.add_widget(
+                    MDLabel(
+                        text=f"{x[5]}",
+                        size_hint_y=None,
+                        height=50
+                    )
+                )
+                self.ids.trip_table_content.add_widget(
+                    MDLabel(
+                        text=f"{x[6]}",
                         size_hint_y=None,
                         height=50
                     )
@@ -502,8 +517,70 @@ class AdminWindow(MDBoxLayout):
                 self.dialog.open()
 
     #FIXME
-    def add_trip(self, location, price):
-        pass
+    def add_trip(self, location, bus, depart_date, depart_time):
+        if location == "" or bus == "" or depart_date == "" or depart_time == "":
+            self.dialog = MDDialog(
+                title="All Field Required!",
+                text="Please fill in all fields!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            sql = 'SELECT loc_id FROM locations WHERE loc_name=%s'
+            values = [location, ]
+            self.mycursor.execute(sql, values)
+            result = self.mycursor.fetchone()
+            loc_id = result[0]
+
+            sql = 'SELECT id FROM bus WHERE bus_name=%s'
+            values = [bus, ]
+            self.mycursor.execute(sql, values)
+            result = self.mycursor.fetchone()
+            bus_id = result[0]
+
+            temp = depart_date.split("-")
+            temp.reverse()
+            date = "-".join(temp)
+
+            time = f"{date} {depart_time}"
+
+            created_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            try:
+                sql = 'INSERT INTO trip(loc_id, bus_id, departure_date, departure_time, created_at) ' \
+                      'VALUES (%s, %s, %s, %s, %s)'
+                values = [loc_id, bus_id, date, time, created_date, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+            except:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text="Cannot Add New Trip!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text="New Trip Added Successfully!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
 
     def open_location_menu(self):
         sql = 'SELECT loc_name FROM locations'
@@ -626,8 +703,101 @@ class AdminWindow(MDBoxLayout):
                     "on_release": lambda x=f"{time}": self.set_trip_departure_time(x)
                 }
             )
+        if self.ids.scrn_mngr.current == "scrn_add_trip":
+            self.menu = MDDropdownMenu(
+                caller=self.ids.add_trip_departure_time_fld,
+                items=items,
+                width_mult=4,
+                ver_growth="down",
+                hor_growth="right",
+            )
+        elif self.ids.scrn_mngr.current == "scrn_update_trip":
+            self.menu = MDDropdownMenu(
+                caller=self.ids.update_trip_departure_time_fld,
+                items=items,
+                width_mult=4,
+                ver_growth="down",
+                hor_growth="right",
+            )
+        self.menu.open()
+
+    def set_trip_departure_time(self, time):
+        if self.ids.scrn_mngr.current == "scrn_add_trip":
+            self.ids.add_trip_departure_time_fld.text = time
+            self.ids.add_trip_departure_time_fld.focus = False
+        elif self.ids.scrn_mngr.current == "scrn_update_trip":
+            self.ids.update_trip_departure_time_fld.text = time
+            self.ids.update_trip_departure_time_fld.focus = False
+        self.menu.dismiss()
+
+    #FIXME
+    def update_trip(self, trip_id, depart_date, depart_time):
+        # Check if user has input in all field
+        if trip_id == "" or depart_date == "" or depart_time == "":
+            self.dialog = MDDialog(
+                title="All Fields Required!",
+                text="Please fill in all field!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            temp = depart_date.split("-")
+            temp.reverse()
+            date = "-".join(temp)
+            update_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            try:
+                sql = 'UPDATE trip SET departure_date=%s, departure_time=%s, updated_at=%s ' \
+                      'WHERE id=%s'
+                values = [date, depart_time, update_time, trip_id, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+            except:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text="Cannot update trip at the moment!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text="Your Trip has been updated!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+                self.set_trip_detail(trip_id)
+
+    def open_trip_menu(self):
+        sql = 'SELECT id FROM trip'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        items = list()
+        for x in result:
+            items.append(
+                {
+                    "text": f"{x[0]}",
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x=f"{x[0]}": self.set_trip_detail(x)
+                }
+            )
         self.menu = MDDropdownMenu(
-            caller=self.ids.add_trip_departure_time_fld,
+            caller=self.ids.update_trip_id_fld,
             items=items,
             width_mult=4,
             ver_growth="down",
@@ -635,14 +805,56 @@ class AdminWindow(MDBoxLayout):
         )
         self.menu.open()
 
-    def set_trip_departure_time(self, time):
-        self.ids.add_trip_departure_time_fld.text = time
-        self.ids.add_trip_departure_time_fld.focus = False
-        self.menu.dismiss()
+    def set_trip_detail(self, trip_id):
+        self.ids.update_trip_detail.clear_widgets()
+        self.ids.update_trip_id_fld.text = trip_id
 
-    #FIXME
-    def update_trip(self):
-        pass
+        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, trip.departure_date, trip.departure_time ' \
+              'FROM trip ' \
+              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+              'INNER JOIN bus ON trip.bus_id = bus.id ' \
+              'WHERE trip.id=%s'
+        values = [trip_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchall()
+        for x in result:
+            self.ids.update_trip_detail.add_widget(
+                MDLabel(
+                    text=f"{x[0]}",
+                    size_hint_y=None,
+                    height=50
+                )
+            )
+            self.ids.update_trip_detail.add_widget(
+                MDLabel(
+                    text=f"{x[1]}",
+                    size_hint_y=None,
+                    height=50
+                )
+            )
+            self.ids.update_trip_detail.add_widget(
+                MDLabel(
+                    text=f"{x[2]}",
+                    size_hint_y=None,
+                    height=50
+                )
+            )
+            self.ids.update_trip_detail.add_widget(
+                MDLabel(
+                    text=f"{x[3]}",
+                    size_hint_y=None,
+                    height=50
+                )
+            )
+            self.ids.update_trip_detail.add_widget(
+                MDLabel(
+                    text=f"{x[4]}",
+                    size_hint_y=None,
+                    height=50
+                )
+            )
+
+        self.menu.dismiss()
 
     #FIXME (DONE)
     def update_password(self, old_pass, new_pass, confirm_pass):
@@ -790,13 +1002,17 @@ class AdminWindow(MDBoxLayout):
 
     def save_departure_date(self, instance, value, date_range):
         date = value.strftime("%d-%m-%Y")
-        self.ids.add_trip_departure_date_fld.secondary_text = str(date)
+        if self.ids.scrn_mngr.current == "scrn_add_trip":
+            self.ids.add_trip_departure_date_fld.secondary_text = str(date)
+        elif self.ids.scrn_mngr.current == "scrn_update_trip":
+            self.ids.update_trip_departure_date_fld.secondary_text = str(date)
 
     def close_departure_date_picker(self, instance, value):
         self.departure_date.dismiss(force=True)
 
     def goto_main_screen(self):
         self.show_user_table()
+        self.show_trip_table()
         self.ids.scrn_mngr.transition.direction = "right"
         self.ids.scrn_mngr.current = "main_scrn"
         self.ids.toolbar.right_action_items = []
@@ -846,12 +1062,16 @@ class AdminWindow(MDBoxLayout):
     def goto_add_trip(self):
         self.ids.add_trip_location_fld.text = ""
         self.ids.add_trip_bus_fld.text = ""
-        self.ids.add_trip_departure_date_fld.secondary_text = ""
+        self.ids.add_trip_departure_date_fld.secondary_text = "Add Departure Date"
         self.ids.add_trip_departure_time_fld.text = ""
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_add_trip"
 
     def goto_update_trip(self):
+        self.ids.update_trip_detail.clear_widgets()
+        self.ids.update_trip_id_fld.text = ""
+        self.ids.update_trip_departure_date_fld.secondary_text = "Add Departure Date"
+        self.ids.update_trip_departure_time_fld.text = ""
         self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_update_trip"
 

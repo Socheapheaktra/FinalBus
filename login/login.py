@@ -19,8 +19,10 @@ class LoginWindow(MDBoxLayout):
         self.mycursor = self.mydb.cursor()
 
     def validate_user(self, username, password):
-        sql = 'SELECT user_name, user_pass, user_desc FROM users ' \
-              'WHERE user_name=%s'
+        sql = 'SELECT users.user_name, users.user_pass, role.role_name ' \
+              'FROM users ' \
+              'INNER JOIN role ON users.role_id = role.id ' \
+              'WHERE users.user_name=%s'
         values = [username, ]
         self.mycursor.execute(sql, values)
         target_user = self.mycursor.fetchall()
