@@ -72,7 +72,7 @@ class AdminWindow(MDBoxLayout):
 
     def show_trip_table(self):
         self.ids.trip_table_content.clear_widgets()
-        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price_per_seat, trip.seat, trip.departure_date, trip.departure_time ' \
+        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price, trip.seat, trip.departure_date, trip.departure_time ' \
               'FROM trip ' \
               'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
               'INNER JOIN bus ON trip.bus_id = bus.id'
@@ -135,7 +135,7 @@ class AdminWindow(MDBoxLayout):
     def show_bus_table(self):
         self.ids.bus_table_content.clear_widgets()
         sql = 'SELECT bus.id, bus.bus_name, bus_type.type_name, bus.bus_desc, ' \
-              'bus.num_of_seat, bus.price_per_seat, bus.status ' \
+              'bus.num_of_seat, bus.price, bus.status ' \
               'FROM bus ' \
               'INNER JOIN bus_type ON bus.type_id = bus_type.id'
         self.mycursor.execute(sql)
@@ -403,7 +403,15 @@ class AdminWindow(MDBoxLayout):
             self.dialog.open()
 
     #FIXME (DONE)
-    def add_bus(self, name, price, bus_type):
+    def add_bus(self, name, location, price, bus_type):
+        # Get Location_id (Foreign Key)
+        sql = 'SELECT loc_id FROM locations ' \
+              'WHERE loc_name = %s'
+        values = [location, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchone()
+        loc_id = result[0]
+
         bus_type_list = ["Express", "VIP"]
         if name == "" or price == "":
             self.ids.bus_name_fld.error = True
@@ -427,9 +435,9 @@ class AdminWindow(MDBoxLayout):
             else:
                 type_id = 2
             try:
-                sql = 'INSERT INTO bus (bus_name, price_per_seat, type_id, created_date) ' \
+                sql = 'INSERT INTO bus (bus_name, loc_id, price, type_id, created_date) ' \
                       'VALUES (%s,%s,%s,%s)'
-                values = [name, float(price), type_id, str(date), ]
+                values = [name, loc_id, float(price), type_id, str(date), ]
                 self.mycursor.execute(sql, values)
                 self.mydb.commit()
             except:
@@ -457,7 +465,6 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
-    #FIXME (DONE)
     def update_bus(self, bus_id, price, bus_status):
         status_list = ["Active", "Inactive"]
         id_list = []
@@ -575,6 +582,11 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
             else:
+                sql = 'UPDATE bus SET status=0 ' \
+                      'WHERE id=%s'
+                values = [bus_id, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
                 self.dialog = MDDialog(
                     title="Success!",
                     text="New Trip Added Successfully!",
@@ -600,19 +612,32 @@ class AdminWindow(MDBoxLayout):
                     "on_release": lambda x=f"{x[0]}": self.set_trip_location(x)
                 }
             )
-        self.menu = MDDropdownMenu(
-            caller=self.ids.add_trip_location_fld,
-            items=items,
-            width_mult=4,
-            ver_growth="down",
-            hor_growth="right",
-        )
+        if self.ids.scrn_mngr.current == "scrn_add_trip":
+            self.menu = MDDropdownMenu(
+                caller=self.ids.add_trip_location_fld,
+                items=items,
+                width_mult=4,
+                ver_growth="down",
+                hor_growth="right",
+            )
+        elif self.ids.scrn_mngr.current == "scrn_add_bus":
+            self.menu = MDDropdownMenu(
+                caller=self.ids.bus_location_fld,
+                items=items,
+                width_mult=4,
+                ver_growth="down",
+                hor_growth="right",
+            )
         self.menu.open()
 
     def set_trip_location(self, location):
-        self.ids.add_trip_location_fld.text = location
-        self.ids.add_trip_location_fld.focus = False
-        self.ids.add_trip_bus_fld.text = ""
+        if self.ids.scrn_mngr.current == "scrn_add_trip":
+            self.ids.add_trip_location_fld.text = location
+            self.ids.add_trip_location_fld.focus = False
+            self.ids.add_trip_bus_fld.text = ""
+        elif self.ids.scrn_mngr.current == "scrn_add_bus":
+            self.ids.bus_location_fld.text = location
+            self.ids.bus_location_fld.focus = False
         self.menu.dismiss()
 
     def open_bus_menu(self):
@@ -624,65 +649,105 @@ class AdminWindow(MDBoxLayout):
         for location in result:
             location_list.append(location[0])
         if self.ids.add_trip_location_fld.text == location_list[0]:
-            sql = 'SELECT bus_name FROM bus WHERE id IN (1,2,3)'
+            sql = 'SELECT bus_name FROM bus WHERE loc_id=1 AND status=1'
             self.mycursor.execute(sql)
             result = self.mycursor.fetchall()
-            for x in result:
+            if not result:
                 items.append(
                     {
-                        "text": f"{x[0]}",
+                        "text": "No Bus Available",
                         "viewclass": "OneLineListItem",
-                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
                     }
                 )
+            else:
+                for x in result:
+                    items.append(
+                        {
+                            "text": f"{x[0]}",
+                            "viewclass": "OneLineListItem",
+                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                        }
+                    )
         elif self.ids.add_trip_location_fld.text == location_list[1]:
-            sql = 'SELECT bus_name FROM bus WHERE id IN (7,8,9)'
+            sql = 'SELECT bus_name FROM bus WHERE loc_id=2 AND status=1'
             self.mycursor.execute(sql)
             result = self.mycursor.fetchall()
-            for x in result:
+            if not result:
                 items.append(
                     {
-                        "text": f"{x[0]}",
+                        "text": "No Bus Available",
                         "viewclass": "OneLineListItem",
-                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
                     }
                 )
+            else:
+                for x in result:
+                    items.append(
+                        {
+                            "text": f"{x[0]}",
+                            "viewclass": "OneLineListItem",
+                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                        }
+                    )
         elif self.ids.add_trip_location_fld.text == location_list[2]:
-            sql = 'SELECT bus_name FROM bus WHERE id IN (4,5,6)'
+            sql = 'SELECT bus_name FROM bus WHERE loc_id=3 AND status=1'
             self.mycursor.execute(sql)
             result = self.mycursor.fetchall()
-            for x in result:
+            if not result:
                 items.append(
                     {
-                        "text": f"{x[0]}",
+                        "text": "No Bus Available",
                         "viewclass": "OneLineListItem",
-                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
                     }
                 )
+            else:
+                for x in result:
+                    items.append(
+                        {
+                            "text": f"{x[0]}",
+                            "viewclass": "OneLineListItem",
+                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                        }
+                    )
         elif self.ids.add_trip_location_fld.text == location_list[3]:
-            sql = 'SELECT bus_name FROM bus WHERE id IN (10,11,12)'
+            sql = 'SELECT bus_name FROM bus WHERE loc_id=4 AND status=1'
             self.mycursor.execute(sql)
             result = self.mycursor.fetchall()
-            for x in result:
+            if not result:
                 items.append(
                     {
-                        "text": f"{x[0]}",
+                        "text": "No Bus Available",
                         "viewclass": "OneLineListItem",
-                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
                     }
                 )
+            else:
+                for x in result:
+                    items.append(
+                        {
+                            "text": f"{x[0]}",
+                            "viewclass": "OneLineListItem",
+                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                        }
+                    )
         else:
-            sql = 'SELECT bus_name FROM bus'
+            sql = 'SELECT bus_name FROM bus WHERE status=1'
             self.mycursor.execute(sql)
             result = self.mycursor.fetchall()
-            for x in result:
+            if not result:
                 items.append(
                     {
-                        "text": f"{x[0]}",
+                        "text": "No Bus Available",
                         "viewclass": "OneLineListItem",
-                        "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
                     }
                 )
+            else:
+                for x in result:
+                    items.append(
+                        {
+                            "text": f"{x[0]}",
+                            "viewclass": "OneLineListItem",
+                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                        }
+                    )
         self.menu = MDDropdownMenu(
             caller=self.ids.add_trip_bus_fld,
             items=items,

@@ -8,27 +8,71 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.button import MDFlatButton
-from kivymd.toast import toast
 from kivymd.uix.label import MDLabel
-from kivymd.uix.behaviors import RectangularElevationBehavior, TouchBehavior
+from kivymd.uix.expansionpanel import MDExpansionPanel, MDExpansionPanelOneLine
+from kivymd.toast import toast
+from kivymd.uix.behaviors import RectangularElevationBehavior
+
+from threading import Thread
 
 import mysql.connector
+import datetime
+
+#FIXME: Need to work on Seat Selection Field (User Can Select Their Seat Number using Checkboxes)
 
 Builder.load_file("user/user.kv")
+
+selected_trip_id = None
+selected_seat = list()
+passenger = 0
+update_trip_summary = False
+payment_method = None
+Thread.daemon = True
 
 class OptionCard(MDCard):
     icon = StringProperty(None)
     text = StringProperty(None)
 
+class Seat(MDBoxLayout):
+    text = StringProperty()
+
+    def add_seat(self, checkbox, seat_no):
+        global selected_seat, passenger, update_trip_summary
+        if checkbox.state == "down":
+            passenger += 1
+            selected_seat.append(seat_no)
+            update_trip_summary = True
+        else:
+            passenger -= 1
+            selected_seat.remove(seat_no)
+            update_trip_summary = True
+
 class BusTicket(MDCard, RectangularElevationBehavior, ButtonBehavior):
+    trip_id = StringProperty(None)
     departure_date = StringProperty(None)
     departure_time = StringProperty(None)
     seat = StringProperty(None)
     price = StringProperty(None)
     bus_name = StringProperty(None)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bind(on_press=lambda x: self.get_trip_id(self.trip_id))
+
+    def get_trip_id(self, trip_id):
+        global selected_trip_id
+        selected_trip_id = trip_id
+
 class CustomTextField(MDTextField):
     pass
+
+class TripSummary(MDBoxLayout):
+    destination = StringProperty()
+    departure_date = StringProperty()
+    passenger = StringProperty("-")
+    seat_no = StringProperty("-")
+    unit_price = StringProperty()
+    total_payment = StringProperty("0.00")
 
 class UserWindow(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -47,6 +91,10 @@ class UserWindow(MDBoxLayout):
         self.return_date = None
         self.dob_date = None
         self.return_date = None
+        self.trip_summary = None
+        self.payment_summary = None
+        self.threading = None
+
         self.get_locations()
 
     def get_locations(self):
@@ -79,9 +127,196 @@ class UserWindow(MDBoxLayout):
             ['arrow-left-bold', lambda x: self.booking_home()]
         ]
 
-    #FIXME: Let User Choose How many Seat They want after clicking on a trip
+    def booking_seat(self, trip_id):
+        global selected_seat, passenger
+        selected_seat = list()
+        passenger = 0
+        self.set_trip_summary(trip_id)
+        self.ids.trip_summary_fld.clear_widgets()
+        self.ids.trip_summary_fld.add_widget(
+            MDExpansionPanel(
+                content=self.trip_summary,
+                panel_cls=MDExpansionPanelOneLine(
+                    text="Trip Summary"
+                )
+            )
+        )
+        self.set_seat_layout(trip_id)
+        self.ids.scrn_booking_mngr.transition.direction = "up"
+        self.ids.scrn_booking_mngr.current = "scrn_seat_selection"
+        self.ids.toolbar.title = "Select Seat"
+        self.ids.toolbar.right_action_items = [
+            ['arrow-left-bold', lambda x: self.booking_ticket()]
+        ]
+
+        self.threading = Thread(target=self.update_trip_summary)
+        self.threading.start()
+
+    def booking_payment(self):
+        global passenger
+        if passenger == 0:
+            self.dialog = MDDialog(
+                title="Missing Requirement",
+                text="Please select a seat",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            self.set_payment_summary()
+            self.ids.payment_detail.clear_widgets()
+            self.ids.payment_detail.add_widget(
+                MDExpansionPanel(
+                    content=self.payment_summary,
+                    panel_cls=MDExpansionPanelOneLine(
+                        text="Trip Summary"
+                    )
+                )
+            )
+            self.ids.scrn_booking_mngr.transition.direction = "up"
+            self.ids.scrn_booking_mngr.current = "scrn_payment"
+            self.ids.toolbar.title = "Select Seat"
+            self.ids.toolbar.right_action_items = [
+                ['arrow-left-bold', lambda x: self.booking_ticket()]
+            ]
+
+    def check_out(self):
+        global payment_method
+        if not payment_method:
+            self.dialog = MDDialog(
+                title="Missing Requirement!",
+                text="Please Select a payment method to continue",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            """ Add Record to tbl_booking and tbl_booking_detail """
+            # Get user_id
+            username = self.ids.nav_drawer_header.text
+            sql = 'SELECT user_id FROM users WHERE user_name = %s'
+            values = [username, ]
+            self.mycursor.execute(sql, values)
+            result = self.mycursor.fetchone()
+            user_id = result[0]
+
+            # Get total payment
+            payment = float(self.payment_summary.total_payment)
+
+            # Get booking date
+            booking_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+            # For tbl_booking
+            # print("For tbl_booking")
+            # print(f"user_id: {user_id}")
+            # print(f"payment: {payment}")
+            # print(f"booking_date: {booking_date}")
+
+            # Insert record into tbl_booking
+            sql = 'INSERT INTO booking (user_id, payment, booking_date) ' \
+                  'VALUES (%s, %s, %s)'
+            values = [user_id, payment, booking_date, ]
+            self.mycursor.execute(sql, values)
+            self.mydb.commit()
+
+            # Get booking_id from tbl_booking by fetching last row
+            sql = 'SELECT id FROM booking ORDER BY id DESC LIMIT 1'
+            self.mycursor.execute(sql)
+            result = self.mycursor.fetchone()
+            booking_id = result[0]
+
+            # Get trip_id
+            trip_id = selected_trip_id
+
+            # Get price
+            price = float(self.payment_summary.unit_price)
+
+            # For tbl_booking_detail
+            # print(f"For tbl_booking_detail")
+            # print(f"trip_id: {trip_id}")
+            # print(f"seat_id: {seat_id}")
+            # print(f"price: {price}")
+
+            # Insert records into tbl_booking_detail
+            for x in range(passenger):
+                # Get seat_id
+                sql = 'SELECT id FROM bus_seat ' \
+                      'WHERE seat_name = %s AND bus_id IN ' \
+                      '(SELECT bus_id FROM trip ' \
+                      'WHERE id = %s)'
+                values = [selected_seat[x], trip_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                seat_id = result[0]
+
+                # Insert Record
+                sql = 'INSERT INTO booking_detail (booking_id, trip_id, seat_id, price) ' \
+                      'VALUES (%s, %s, %s, %s)'
+                values = [booking_id, trip_id, seat_id, price, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+
+                # Update seat status
+                sql = 'UPDATE bus_seat SET status = 0 ' \
+                      'WHERE id = %s'
+                values = [seat_id, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+
+            # Online Payment Method or Offline Payment Method
+            if payment_method == "Online Payment":
+                sql = 'INSERT INTO payment_online (booking_id, pay_date, cus_id) ' \
+                      'VALUES (%s, %s, %s)'
+                values = [booking_id, booking_date, user_id, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+
+                # Update Booking paid status
+                sql = 'UPDATE booking SET status = 1 ' \
+                      'WHERE id = %s'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+
+                self.dialog = MDDialog(
+                    title="All Done",
+                    text="Payment Successful!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Done",
+                            on_release=lambda a: self.return_main_screen()
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                sql = 'INSERT INTO payment_offline (booking_id, booking_date, cus_id) ' \
+                      'VALUES (%s, %s, %s)'
+                values = [booking_id, booking_date, user_id, ]
+                self.mycursor.execute(sql, values)
+                self.mydb.commit()
+
+                self.dialog = MDDialog(
+                    title="All Done",
+                    text="Your ticket has been booked!",
+                    buttons=[
+                        MDFlatButton(
+                            text="Done",
+                            on_release=lambda a: self.return_main_screen()
+                        )
+                    ]
+                )
+                self.dialog.open()
+
     def search_tickets(self, location, depart_date):
-        #Check for requirements
         if location == "" or depart_date == "":
             self.dialog = MDDialog(
                 title="Missing Requirement!",
@@ -124,16 +359,89 @@ class UserWindow(MDBoxLayout):
                 self.ids.search_ticket_detail.clear_widgets()
                 self.ids.search_count.text = f"{count} trips found"
                 for x in result:
-                    self.ids.search_ticket_detail.add_widget(
-                        BusTicket(
-                            departure_date=f"{x[1]}",
-                            departure_time=f"{x[2]}",
-                            seat=f"{x[3]}",
-                            price=f"{x[4]}",
-                            bus_name=f"{x[5]}"
-                        )
+                    ticket = BusTicket(
+                        trip_id=f"{x[0]}",
+                        departure_date=f"{x[1]}",
+                        departure_time=f"{x[2]}",
+                        seat=f"{x[3]}",
+                        price=f"{x[4]}",
+                        bus_name=f"{x[5]}",
+                        on_release=lambda a: self.booking_seat(selected_trip_id)
                     )
+                    self.ids.search_ticket_detail.add_widget(ticket)
                 self.booking_ticket()
+
+    def update_trip_summary(self):
+        global update_trip_summary
+        while True:
+            if update_trip_summary:
+                self.trip_summary.passenger = str(passenger)
+                self.trip_summary.seat_no = ",".join(selected_seat)
+                self.trip_summary.total_payment = str(passenger * float(self.trip_summary.unit_price))
+                update_trip_summary = False
+            if self.ids.scrn_booking_mngr.current != "scrn_seat_selection":
+                return
+
+    def set_trip_summary(self, trip_id):
+        self.trip_summary = TripSummary()
+        sql = 'SELECT locations.loc_name, trip.departure_date, trip.departure_time, bus.price ' \
+              'FROM trip ' \
+              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+              'INNER JOIN bus ON trip.bus_id = bus.id ' \
+              'WHERE trip.id=%s'
+        values = [trip_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchall()
+        for x in result:
+            self.trip_summary.destination = x[0]
+            self.trip_summary.departure_date = f"{x[1]} {x[2]}"
+            self.trip_summary.unit_price = f"{x[3]}"
+
+    def set_payment_summary(self):
+        # destination = StringProperty()
+        # departure_date = StringProperty()
+        # passenger = StringProperty("-")
+        # seat_no = StringProperty("-")
+        # unit_price = StringProperty()
+        # total_payment = StringProperty("0.00")
+        self.payment_summary = TripSummary()
+        self.payment_summary.destination = self.trip_summary.destination
+        self.payment_summary.departure_date = self.trip_summary.departure_date
+        self.payment_summary.passenger = self.trip_summary.passenger
+        self.payment_summary.seat_no = self.trip_summary.seat_no
+        self.payment_summary.unit_price = self.trip_summary.unit_price
+        self.payment_summary.total_payment = self.trip_summary.total_payment
+
+    def set_seat_layout(self, trip_id):
+        self.ids.seat_layout.clear_widgets()
+        sql = 'SELECT seat_name, status ' \
+              'FROM bus_seat ' \
+              'WHERE bus_id IN (SELECT bus_id FROM trip WHERE id=%s)'
+        values = [trip_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchall()
+        for seat in result:
+            if seat[1] == 1:
+                self.ids.seat_layout.add_widget(
+                    Seat(
+                        text=f"{seat[0]}",
+                        disabled=False,
+                    )
+                )
+            else:
+                self.ids.seat_layout.add_widget(
+                    Seat(
+                        text=f"{seat[0]}",
+                        disabled=True,
+                    )
+                )
+
+    def set_payment_method(self, checkbox, method):
+        global payment_method
+        if checkbox.state == "down":
+            payment_method = method
+        else:
+            payment_method = None
 
     def set_list_locations(self):
         """ Show Location Menu """
@@ -363,6 +671,10 @@ class UserWindow(MDBoxLayout):
                     )
                     self.dialog.open()
                     self.goto_main_screen()
+
+    def return_main_screen(self):
+        self.close_dialog()
+        self.booking_home()
 
     def close_dialog(self, *args):
         self.dialog.dismiss(force=True)
