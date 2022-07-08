@@ -1,5 +1,6 @@
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.floatlayout import MDFloatLayout
+from kivymd.uix.gridlayout import MDGridLayout
 from kivy.lang.builder import Builder
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
@@ -15,6 +16,8 @@ import datetime
 import mysql.connector
 
 Builder.load_file("admin/admin.kv")
+
+selected_booking_id = 0
 
 class BusStatusField(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -50,6 +53,24 @@ class Transaction(MDCard, RectangularElevationBehavior):
     bus_name = StringProperty(None)
     seat = StringProperty(None)
     paid_status = StringProperty(None)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bind(on_release=lambda x: self.get_booking_id())
+
+    def get_booking_id(self):
+        global selected_booking_id
+        selected_booking_id = int(self.booking_id)
+
+class TransactionSummary(MDBoxLayout):
+    username = StringProperty()
+    destination = StringProperty()
+    departure_date = StringProperty()
+    passenger = StringProperty("-")
+    seat_no = StringProperty("-")
+    unit_price = StringProperty()
+    total_payment = StringProperty("0.00")
+    paid_status = StringProperty()
 
 class AdminWindow(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -239,18 +260,167 @@ class AdminWindow(MDBoxLayout):
             pass
 
     def show_transaction(self):
-        booking_id = list()
+        self.ids.transaction.clear_widgets()
+        booking = list()
         sql = 'SELECT id FROM booking'
         self.mycursor.execute(sql)
         result = self.mycursor.fetchall()
         if not result:
-            self.ids.transaction_detail.clear_widgets()
-            self.ids.transaction_detail.add_widget(NoData())
+            self.ids.transaction.add_widget(NoData())
         else:
             for x in result:
-                booking_id.append(x[0])
+                booking.append(x[0])
 
+            for booking_id in booking:
+                # Get booking_date and price from booking
+                sql = 'SELECT booking_date, payment, status FROM booking ' \
+                      'WHERE id = %s'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                booking_date = result[0]
+                price = result[1]
+                paid_status = "Paid" if result[2] == 1 else "Not Paid"
 
+                # Get seat_name from booking
+                seat = list()
+                sql = 'SELECT seat_name FROM bus_seat ' \
+                      'WHERE id IN (SELECT seat_id FROM booking_detail WHERE booking_id = %s)'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchall()
+                for x in result:
+                    seat.append(x[0])
+
+                # Get trip_id
+                sql = 'SELECT DISTINCT trip_id FROM booking_detail ' \
+                      'WHERE booking_id = %s'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                trip_id = result[0]
+
+                # Get destination and bus name
+                sql = 'SELECT locations.loc_name, bus.bus_name ' \
+                      'FROM trip ' \
+                      'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+                      'INNER JOIN bus ON trip.bus_id = bus.id ' \
+                      'WHERE trip.id = %s'
+                values = [trip_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                destination = result[0]
+                bus_name = result[1]
+
+                self.ids.transaction.add_widget(
+                    Transaction(
+                        booking_id=str(booking_id),
+                        trip_id=str(trip_id),
+                        destination=destination,
+                        booking_date=str(booking_date),
+                        price=str(price),
+                        bus_name=bus_name,
+                        seat=",".join(seat),
+                        paid_status=paid_status,
+                        on_release=lambda a=Transaction: self.show_transaction_detail(a)
+                    )
+                )
+            self.ids.transaction.add_widget(
+                MDLabel(
+                    text=""
+                )
+            )
+
+    def show_transaction_detail(self, booking):
+        transaction_detail = TransactionSummary()
+
+        # Get username
+        sql = 'SELECT users.user_name FROM booking ' \
+              'INNER JOIN users ON booking.user_id = users.user_id ' \
+              'WHERE booking.id = %s'
+        values = [booking.booking_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchone()
+        username = result[0]
+        transaction_detail.username = username
+
+        sql = 'SELECT locations.loc_name, trip.departure_date, trip.departure_time, bus.price ' \
+              'FROM trip ' \
+              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+              'INNER JOIN bus ON trip.bus_id = bus.id ' \
+              'WHERE trip.id = %s'
+        values = [booking.trip_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchall()
+        for x in result:
+            transaction_detail.destination = x[0]
+            transaction_detail.departure_date = f"{x[1]} {x[2]}"
+            transaction_detail.unit_price = f"{x[3]}"
+
+        transaction_detail.seat_no = booking.seat
+        transaction_detail.total_payment = booking.price
+        transaction_detail.passenger = str(len(booking.seat.split(",")))
+        transaction_detail.paid_status = booking.paid_status
+
+        self.ids.transaction_summary.clear_widgets()
+        self.ids.transaction_summary.add_widget(transaction_detail)
+
+        self.goto_transaction_detail()
+
+    def update_transaction(self):
+        self.dialog = MDDialog(
+            title="Confirm",
+            text="Confirm update transaction status?",
+            buttons=[
+                MDFlatButton(
+                    text="Yes",
+                    on_release=lambda x: self.confirm_update_transaction(selected_booking_id)
+                ),
+                MDFlatButton(
+                    text="No",
+                    on_release=self.close_dialog
+                )
+            ]
+        )
+        self.dialog.open()
+
+    def confirm_update_transaction(self, booking_id):
+        self.close_dialog()
+        try:
+            sql = 'UPDATE booking, payment_offline ' \
+                  'SET booking.status = 1, payment_offline.pay_status = 1 ' \
+                  'WHERE booking.id = %s AND payment_offline.booking_id = %s'
+            values = [booking_id, booking_id, ]
+            self.mycursor.execute(sql, values)
+            self.mydb.commit()
+        except:
+            self.dialog = MDDialog(
+                title="Error!",
+                text="An error occurred while update transaction status please try again!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=lambda x:self.return_to_transaction()
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            self.dialog = MDDialog(
+                title="Success!",
+                text="Transaction updated successfully!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=lambda x:self.return_to_transaction()
+                    )
+                ]
+            )
+            self.dialog.open()
+
+    def return_to_transaction(self):
+        self.close_dialog()
+        self.goto_transaction()
 
     #FIXME (DONE)
     def add_user(self, username, password, email):
@@ -1274,8 +1444,16 @@ class AdminWindow(MDBoxLayout):
         self.ids.scrn_mngr.current = "scrn_update_bus"
 
     def goto_transaction(self):
-        self.ids.scrn_mngr.transition.direction = "left"
+        self.show_transaction()
+        if self.ids.scrn_mngr.current == "scrn_transaction_detail":
+            self.ids.scrn_mngr.transition.direction = "right"
+        else:
+            self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_transaction"
+
+    def goto_transaction_detail(self):
+        self.ids.scrn_mngr.transition.direction = "left"
+        self.ids.scrn_mngr.current = "scrn_transaction_detail"
 
     def close_dialog(self, *args):
         self.dialog.dismiss(force=True)

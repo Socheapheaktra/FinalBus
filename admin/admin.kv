@@ -11,6 +11,60 @@
     halign: "left"
 <CustomButton@MDRaisedButton>
     md_bg_color: 0, 0, 0, 1
+<TransactionSummary>
+    orientation: "horizontal"
+    size_hint: 1, None
+    height: self.minimum_height
+    spacing: 20
+    padding: 20, 20
+    GridLayout:
+        size_hint: .4, None
+        spacing: 20
+        cols: 1
+        MDLabel:
+            text: "Purchased by"
+        MDLabel:
+            text: "Direction"
+        MDLabel:
+            text: "Departure Date"
+        MDLabel:
+            text: "Passenger"
+        MDLabel:
+            text: "Seat No"
+        MDLabel:
+            text: "Unit Price"
+        MDLabel:
+            text: "Total Payment"
+        MDLabel:
+            text: "Status"
+    GridLayout:
+        size_hint: .6, None
+        spacing: 20
+        cols: 1
+        MDLabel:
+            id: username_fld
+            text: root.username
+        MDLabel:
+            id: destination_fld
+            text: root.destination
+        MDLabel:
+            id: departure_date_fld
+            text: root.departure_date
+        MDLabel:
+            id: passenger_fld
+            text: root.passenger
+        MDLabel:
+            id: seat_no_fld
+            text: root.seat_no
+        MDLabel:
+            id: unit_price_fld
+            text: "USD " + root.unit_price
+        MDLabel:
+            id: total_payment_fld
+            text: "USD " + root.total_payment
+        MDLabel:
+            id: paid_status_fld
+            text: root.paid_status
 <NoData>
     MDIcon:
         icon: root.icon
@@ -1029,7 +1083,7 @@
                             size: self.size
                             pos: self.pos
                     MDTopAppBar:
-                        title: "Update Trip"
+                        title: "Transactions"
                         md_bg_color: 0, 0, 0, 1
                         right_action_items:
                             [ \
@@ -1037,8 +1091,59 @@
                             ]
                     ScrollView:
                         MDBoxLayout:
-                            id: transaction_detail
+                            id: transaction
                             orientation: "vertical"
                             spacing: 20
+                            padding: main_win.size[0]/8, 50
                             size_hint_y: None
                             height: self.minimum_height
+            Screen:
+                id: scrn_transaction_detail
+                name: "scrn_transaction_detail"
+                MDBoxLayout:
+                    orientation: "vertical"
+                    spacing: 20
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    MDTopAppBar:
+                        title: "Transaction Detail"
+                        md_bg_color: 0, 0, 0, 1
+                        right_action_items:
+                            [ \
+                            ['arrow-left-bold', lambda x: root.goto_transaction()] \
+                            ]
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        spacing: 20
+                        padding: main_win.size[0]/8, 20
+                        MDCard:
+                            radius: [12, 12, 12, 12]
+                            orientation: "vertical"
+                            padding: 50, 20
+                            size_hint_y: None
+                            height: self.minimum_height
+                            GridLayout:
+                                cols: 1
+                                size_hint_y: None
+                                height: self.minimum_height
+                                spacing: 20
+                                MDLabel:
+                                    text: "Ticket Summary"
+                                    bold: True
+                                    font_size: 32
+                                    size_hint_y: None
+                                MDBoxLayout:
+                                    id: transaction_summary
+                                    size_hint_y: None
+                                MDLabel:
+                                    text: ""
+                        CustomButton:
+                            text: "Update Status"
+                            on_release:
+                                root.update_transaction()
+                        MDLabel:
+                            text: ""
