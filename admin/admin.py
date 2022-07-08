@@ -1,12 +1,13 @@
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.lang.builder import Builder
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.button import MDIconButton
+from kivymd.uix.card import MDCard
+from kivymd.uix.behaviors import RectangularElevationBehavior
 
 from kivy.properties import StringProperty
 
@@ -35,6 +36,20 @@ class UserTypeField(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.text = StringProperty()
+
+class NoData(MDFloatLayout):
+    text = "No Data"
+    icon = "database"
+
+class Transaction(MDCard, RectangularElevationBehavior):
+    booking_id = StringProperty(None)
+    trip_id = StringProperty(None)
+    destination = StringProperty(None)
+    booking_date = StringProperty(None)
+    price = StringProperty(None)
+    bus_name = StringProperty(None)
+    seat = StringProperty(None)
+    paid_status = StringProperty(None)
 
 class AdminWindow(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -72,7 +87,7 @@ class AdminWindow(MDBoxLayout):
 
     def show_trip_table(self):
         self.ids.trip_table_content.clear_widgets()
-        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price, trip.seat, trip.departure_date, trip.departure_time ' \
+        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price, trip.seat, trip.departure_date, trip.departure_time, trip.status ' \
               'FROM trip ' \
               'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
               'INNER JOIN bus ON trip.bus_id = bus.id'
@@ -125,6 +140,17 @@ class AdminWindow(MDBoxLayout):
                 self.ids.trip_table_content.add_widget(
                     MDLabel(
                         text=f"{x[6]}",
+                        size_hint_y=None,
+                        height=50
+                    )
+                )
+                status = "Active" if x[7] == 1 else "Inactive"
+                text_color = [0, 1, 0, 1] if x[7] == 1 else [1, 0, 0, 1]
+                self.ids.trip_table_content.add_widget(
+                    MDLabel(
+                        text=status,
+                        theme_text_color="Custom",
+                        text_color=text_color,
                         size_hint_y=None,
                         height=50
                     )
@@ -211,6 +237,20 @@ class AdminWindow(MDBoxLayout):
                     )
         else:
             pass
+
+    def show_transaction(self):
+        booking_id = list()
+        sql = 'SELECT id FROM booking'
+        self.mycursor.execute(sql)
+        result = self.mycursor.fetchall()
+        if not result:
+            self.ids.transaction_detail.clear_widgets()
+            self.ids.transaction_detail.add_widget(NoData())
+        else:
+            for x in result:
+                booking_id.append(x[0])
+
+
 
     #FIXME (DONE)
     def add_user(self, username, password, email):
@@ -853,8 +893,72 @@ class AdminWindow(MDBoxLayout):
                 self.dialog.open()
                 self.set_trip_detail(trip_id)
 
+    def end_trip(self, trip_id):
+        """ SET Trip Status to False and Bus Status to True """
+        if trip_id == "":
+            self.dialog = MDDialog(
+                title="Missing Requirement!",
+                text="Please select a trip id",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            self.dialog = MDDialog(
+                title="Are you sure to end this trip?",
+                buttons=[
+                    MDFlatButton(
+                        text="Yes",
+                        on_release=lambda x: self.confirm_end_trip(trip_id)
+                    ),
+                    MDFlatButton(
+                        text="No",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+
+    def confirm_end_trip(self, trip_id):
+        self.close_dialog()
+        try:
+            sql = 'UPDATE trip, bus ' \
+                  'SET trip.status = 0, bus.status = 1 ' \
+                  'WHERE trip.id = %s AND trip.bus_id = bus.id'
+            values = [trip_id, ]
+            self.mycursor.execute(sql, values)
+            self.mydb.commit()
+        except:
+            self.dialog = MDDialog(
+                title="Error!",
+                text="Something's wrong try again later!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            self.dialog = MDDialog(
+                title="Success!",
+                text="Your trip has ended!",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+
     def open_trip_menu(self):
-        sql = 'SELECT id FROM trip'
+        sql = 'SELECT id FROM trip WHERE status = 1'
         self.mycursor.execute(sql)
         result = self.mycursor.fetchall()
         items = list()

@@ -1,4 +1,5 @@
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.lang.builder import Builder
 from kivymd.uix.list import OneLineListItem
 from kivymd.uix.card import MDCard
@@ -6,12 +7,12 @@ from kivy.properties import StringProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
+from kivymd.uix.label import MDLabel
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.button import MDFlatButton
-from kivymd.uix.label import MDLabel
 from kivymd.uix.expansionpanel import MDExpansionPanel, MDExpansionPanelOneLine
 from kivymd.toast import toast
-from kivymd.uix.behaviors import RectangularElevationBehavior
+from kivymd.uix.behaviors import RoundedRectangularElevationBehavior
 
 from threading import Thread
 
@@ -33,6 +34,10 @@ class OptionCard(MDCard):
     icon = StringProperty(None)
     text = StringProperty(None)
 
+class NoData(MDFloatLayout):
+    text = "No Data"
+    icon = "database"
+
 class Seat(MDBoxLayout):
     text = StringProperty()
 
@@ -47,7 +52,7 @@ class Seat(MDBoxLayout):
             selected_seat.remove(seat_no)
             update_trip_summary = True
 
-class BusTicket(MDCard, RectangularElevationBehavior, ButtonBehavior):
+class BusTicket(MDCard, RoundedRectangularElevationBehavior, ButtonBehavior):
     trip_id = StringProperty(None)
     departure_date = StringProperty(None)
     departure_time = StringProperty(None)
@@ -62,6 +67,16 @@ class BusTicket(MDCard, RectangularElevationBehavior, ButtonBehavior):
     def get_trip_id(self, trip_id):
         global selected_trip_id
         selected_trip_id = trip_id
+
+class PurchasedTicket(MDCard, RoundedRectangularElevationBehavior):
+    booking_id = StringProperty(None)
+    trip_id = StringProperty(None)
+    destination = StringProperty(None)
+    booking_date = StringProperty(None)
+    price = StringProperty(None)
+    bus_name = StringProperty(None)
+    seat = StringProperty(None)
+    paid_status = StringProperty(None)
 
 class CustomTextField(MDTextField):
     pass
@@ -271,6 +286,13 @@ class UserWindow(MDBoxLayout):
                 self.mycursor.execute(sql, values)
                 self.mydb.commit()
 
+                # Update trip available seat
+                sql = 'UPDATE trip SET seat = seat - 1 ' \
+                      'WHERE id = %s'
+                values = [trip_id, ]
+                self.mycursor.execute(sql, values)
+                self.mycursor.commit()
+
             # Online Payment Method or Offline Payment Method
             if payment_method == "Online Payment":
                 sql = 'INSERT INTO payment_online (booking_id, pay_date, cus_id) ' \
@@ -347,7 +369,7 @@ class UserWindow(MDBoxLayout):
                   'FROM trip ' \
                   'INNER JOIN bus ON trip.bus_id = bus.id ' \
                   'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
-                  'WHERE trip.loc_id=%s AND trip.departure_date=%s'
+                  'WHERE trip.loc_id=%s AND trip.departure_date=%s AND trip.status=1'
             values = [loc_id, date, ]
             self.mycursor.execute(sql, values)
             result = self.mycursor.fetchall()
@@ -521,6 +543,121 @@ class UserWindow(MDBoxLayout):
     def goto_main_screen(self):
         self.ids.scrn_mngr.transition.direction = "right"
         self.ids.scrn_mngr.current = "main_scrn"
+
+    def ticket_home(self):
+        sql = 'SELECT user_id FROM users ' \
+              'WHERE user_name = %s'
+        values = [self.ids.nav_drawer_header.text, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchone()
+        user_id = result[0]
+        self.set_purchased_ticket(user_id=user_id)
+
+        self.ids.scrn_ticket_mngr.transition.direction = "right"
+        self.ids.scrn_ticket_mngr.current = "scrn_ticket"
+        self.ids.toolbar.right_action_items = []
+
+    def set_purchased_ticket(self, user_id):
+        self.ids.purchased_ticket.clear_widgets()
+        # Check if user has booked any tickets
+        booking = list()
+        sql = 'SELECT id FROM booking WHERE user_id = %s'
+        values = [user_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchall()
+        if result:
+            for x in result:
+                booking.append(x[0])
+
+        if not booking:
+            self.ids.purchased_ticket.add_widget(NoData())
+        else:
+            # Get Purchased Ticket Detail
+            for booking_id in booking:
+                sql = 'SELECT payment, booking_date, status FROM booking ' \
+                      'WHERE id = %s'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                price = result[0]
+                booking_date = result[1]
+                status = result[2]
+
+                paid_status = "Paid" if status == 1 else "Not Paid"
+
+                seat = list()
+                sql = 'SELECT seat_name FROM bus_seat ' \
+                      'WHERE id IN (SELECT seat_id FROM booking_detail WHERE booking_id = %s)'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchall()
+                for x in result:
+                    seat.append(x[0])
+
+                sql = 'SELECT DISTINCT trip_id FROM booking_detail ' \
+                      'WHERE booking_id = %s'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                trip_id = result[0]
+
+                sql = 'SELECT locations.loc_name, bus.bus_name FROM trip ' \
+                      'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+                      'INNER JOIN bus ON trip.bus_id = bus.id ' \
+                      'WHERE trip.id IN (SELECT DISTINCT trip_id FROM booking_detail WHERE booking_id = %s)'
+                values = [booking_id, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchone()
+                destination = result[0]
+                bus_name = result[1]
+
+                self.ids.purchased_ticket.add_widget(
+                    PurchasedTicket(
+                        booking_id=str(booking_id),
+                        trip_id=str(trip_id),
+                        destination=destination,
+                        booking_date=str(booking_date),
+                        price=str(price),
+                        bus_name=bus_name,
+                        seat=",".join(seat),
+                        paid_status=paid_status,
+                        on_release=lambda a=PurchasedTicket: self.show_purchased_summary(a)
+                    )
+                )
+            self.ids.purchased_ticket.add_widget(
+                MDLabel(
+                    text=""
+                )
+            )
+
+    def show_purchased_summary(self, ticket):
+        purchased_summary = TripSummary()
+        sql = 'SELECT locations.loc_name, trip.departure_date, trip.departure_time, bus.price ' \
+              'FROM trip ' \
+              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+              'INNER JOIN bus ON trip.bus_id = bus.id ' \
+              'WHERE trip.id=%s'
+        values = [ticket.trip_id, ]
+        self.mycursor.execute(sql, values)
+        result = self.mycursor.fetchall()
+        for x in result:
+            purchased_summary.destination = x[0]
+            purchased_summary.departure_date = f"{x[1]} {x[2]}"
+            purchased_summary.unit_price = f"{x[3]}"
+
+        purchased_summary.seat_no = ticket.seat
+        purchased_summary.total_payment = ticket.price
+        purchased_summary.passenger = str(len(ticket.seat.split(",")))
+
+        self.ids.purchased_summary.clear_widgets()
+        self.ids.purchased_summary.add_widget(purchased_summary)
+
+        self.ids.scrn_ticket_mngr.transition.direction = "left"
+        self.ids.scrn_ticket_mngr.current = "scrn_ticket_detail"
+        self.ids.toolbar.title = "Ticket Detail"
+        self.ids.toolbar.right_action_items = [
+            ['arrow-left-bold', lambda a: self.ticket_home()]
+        ]
 
     def account_edit_profile(self):
         sql = 'SELECT first_name, last_name, phone, email, date_of_birth FROM users ' \
@@ -700,10 +837,10 @@ class UserWindow(MDBoxLayout):
         self.parent.parent.current = "scrn_login"
         self.close_dialog()
 
-    def show_trip_detail(self, trip_id, depart_date, depart_time, seat, price, bus):
-        print(f"Trip ID: {trip_id}")
-        print(f"Date: {depart_date}")
-        print(f"Time: {depart_time}")
-        print(f"Price: {price}")
-        print(f"Bus: {bus}")
-        print(f"Seat: {seat}")
+    # def show_trip_detail(self, trip_id, depart_date, depart_time, seat, price, bus):
+    #     print(f"Trip ID: {trip_id}")
+    #     print(f"Date: {depart_date}")
+    #     print(f"Time: {depart_time}")
+    #     print(f"Price: {price}")
+    #     print(f"Bus: {bus}")
+    #     print(f"Seat: {seat}")

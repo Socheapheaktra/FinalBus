@@ -11,6 +11,56 @@
     halign: "left"
 <CustomButton@MDRaisedButton>
     md_bg_color: 0, 0, 0, 1
+<NoData>
+    MDIcon:
+        icon: root.icon
+        font_size: "64sp"
+        pos_hint: {'center_x': .5, 'center_y': .55}
+    MDLabel:
+        text: root.text
+        halign: "center"
+        font_style: "H2"
+        pos_hint: {'center_x': .5, 'center_y': .45}
+<Transaction>
+    radius: [6, 6, 6, 6]
+    style: "elevated"
+    elevation: 6
+    padding: 100, 20
+    size_hint_y: None
+    GridLayout:
+        cols: 3
+        spacing: 20
+        MDLabel:
+            text: "Destination"
+        MDLabel:
+            text: "Booking Date"
+        MDLabel:
+            text: "Price"
+        MDLabel:
+            text: root.destination
+        MDLabel:
+            text: root.booking_date
+        MDLabel:
+            text: "USD " + root.price
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: self.minimum_height
+            MDIcon:
+                icon: "bus"
+            MDLabel:
+                text: root.bus_name
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: self.minimum_height
+            MDIcon:
+                icon: "car-seat"
+            MDLabel:
+                text: "Seat:" + root.seat
+        MDLabel:
+            bold: True
+            text: root.paid_status
 <BusStatusField>
     orientation: "horizontal"
     spacing: 20
@@ -304,7 +354,7 @@
                                             pos: self.pos
                                             radius: [12, 12, 12 ,12]
                                     GridLayout:
-                                        cols: 7
+                                        cols: 8
                                         size_hint_y: .1
                                         spacing: 10
                                         TableHeader:
@@ -321,10 +371,12 @@
                                             text: "Departure Date"
                                         TableHeader:
                                             text: "Departure Time"
+                                        TableHeader:
+                                            text: "Status"
                                     ScrollView:
                                         GridLayout:
                                             id: trip_table_content
-                                            cols: 7
+                                            cols: 8
                                             size_hint_y: None
                                             spacing: 10
                                 MDBoxLayout:
@@ -721,6 +773,7 @@
                             orientation: "vertical"
                             radius: [12, 12, 12, 12]
                             padding: 20, 20
+                            spacing: 20
                             MDBoxLayout:
                                 orientation: "horizontal"
                                 spacing: 20
@@ -783,6 +836,11 @@
                                 on_release:
                                     root.update_trip(update_trip_id_fld.text,
                                     update_trip_departure_date_fld.secondary_text, update_trip_departure_time_fld.text)
+                            CustomButton:
+                                text: "End Trip"
+                                size_hint_x: 1
+                                on_release:
+                                    root.end_trip(update_trip_id_fld.text)
             Screen:
                 id: scrn_bus
                 name: 'scrn_bus'
@@ -964,6 +1022,12 @@
                 name: 'scrn_transaction'
                 MDBoxLayout:
                     orientation: "vertical"
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, .25
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     MDTopAppBar:
                         title: "Update Trip"
                         md_bg_color: 0, 0, 0, 1
@@ -971,7 +1035,10 @@
                             [ \
                             ['arrow-left-bold', lambda x: root.goto_main_screen()] \
                             ]
-                    MDLabel:
-                        text: "Transaction Screen"
-                        font_style: "H2"
-                        halign: "center"
+                    ScrollView:
+                        MDBoxLayout:
+                            id: transaction_detail
+                            orientation: "vertical"
+                            spacing: 20
+                            size_hint_y: None
+                            height: self.minimum_height
