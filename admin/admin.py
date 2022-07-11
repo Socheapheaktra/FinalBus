@@ -1,6 +1,5 @@
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.floatlayout import MDFloatLayout
-from kivymd.uix.gridlayout import MDGridLayout
 from kivy.lang.builder import Builder
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
@@ -858,106 +857,150 @@ class AdminWindow(MDBoxLayout):
         items = list()
         for location in result:
             location_list.append(location[0])
-        if self.ids.add_trip_location_fld.text == location_list[0]:
-            sql = 'SELECT bus_name FROM bus WHERE loc_id=1 AND status=1'
-            self.mycursor.execute(sql)
-            result = self.mycursor.fetchall()
-            if not result:
-                items.append(
-                    {
-                        "text": "No Bus Available",
-                        "viewclass": "OneLineListItem",
-                    }
-                )
-            else:
-                for x in result:
+        for location in location_list:
+            if self.ids.add_trip_location_fld.text == location:
+                sql = 'SELECT bus.bus_name FROM bus ' \
+                      'INNER JOIN locations ON bus.loc_id = locations.loc_id ' \
+                      'WHERE locations.loc_name = %s AND bus.status = 1'
+                values = [location, ]
+                self.mycursor.execute(sql, values)
+                result = self.mycursor.fetchall()
+                if not result:
                     items.append(
                         {
-                            "text": f"{x[0]}",
-                            "viewclass": "OneLineListItem",
-                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                            "text": "No Bus Available",
+                            "viewclass": "OneLineListItem"
                         }
                     )
-        elif self.ids.add_trip_location_fld.text == location_list[1]:
-            sql = 'SELECT bus_name FROM bus WHERE loc_id=2 AND status=1'
-            self.mycursor.execute(sql)
-            result = self.mycursor.fetchall()
-            if not result:
-                items.append(
-                    {
-                        "text": "No Bus Available",
-                        "viewclass": "OneLineListItem",
-                    }
-                )
-            else:
-                for x in result:
+                else:
+                    for x in result:
+                        items.append(
+                            {
+                                "text": f"{x[0]}",
+                                "viewclass": "OneLineListItem",
+                                "on_release": lambda a=f"{x[0]}": self.set_trip_bus(a)
+                            }
+                        )
+            elif self.ids.add_trip_location_fld.text == "":
+                sql = 'SELECT bus_name FROM bus WHERE status = 1'
+                self.mycursor.execute(sql)
+                result = self.mycursor.fetchall()
+                if not result:
                     items.append(
                         {
-                            "text": f"{x[0]}",
-                            "viewclass": "OneLineListItem",
-                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+                            "text": "No Bus Available",
+                            "viewclass": "OneLineListItem"
                         }
                     )
-        elif self.ids.add_trip_location_fld.text == location_list[2]:
-            sql = 'SELECT bus_name FROM bus WHERE loc_id=3 AND status=1'
-            self.mycursor.execute(sql)
-            result = self.mycursor.fetchall()
-            if not result:
-                items.append(
-                    {
-                        "text": "No Bus Available",
-                        "viewclass": "OneLineListItem",
-                    }
-                )
-            else:
-                for x in result:
-                    items.append(
-                        {
-                            "text": f"{x[0]}",
-                            "viewclass": "OneLineListItem",
-                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-                        }
-                    )
-        elif self.ids.add_trip_location_fld.text == location_list[3]:
-            sql = 'SELECT bus_name FROM bus WHERE loc_id=4 AND status=1'
-            self.mycursor.execute(sql)
-            result = self.mycursor.fetchall()
-            if not result:
-                items.append(
-                    {
-                        "text": "No Bus Available",
-                        "viewclass": "OneLineListItem",
-                    }
-                )
-            else:
-                for x in result:
-                    items.append(
-                        {
-                            "text": f"{x[0]}",
-                            "viewclass": "OneLineListItem",
-                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-                        }
-                    )
-        else:
-            sql = 'SELECT bus_name FROM bus WHERE status=1'
-            self.mycursor.execute(sql)
-            result = self.mycursor.fetchall()
-            if not result:
-                items.append(
-                    {
-                        "text": "No Bus Available",
-                        "viewclass": "OneLineListItem",
-                    }
-                )
-            else:
-                for x in result:
-                    items.append(
-                        {
-                            "text": f"{x[0]}",
-                            "viewclass": "OneLineListItem",
-                            "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-                        }
-                    )
+                else:
+                    for x in result:
+                        items.append(
+                            {
+                                "text": f"{x[0]}",
+                                "viewclass": "OneLineListItem",
+                                "on_release": lambda a=f"{x[0]}": self.set_trip_bus(a)
+                            }
+                        )
+        # if self.ids.add_trip_location_fld.text == location_list[0]:
+        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=1 AND status=1'
+        #     self.mycursor.execute(sql)
+        #     result = self.mycursor.fetchall()
+        #     if not result:
+        #         items.append(
+        #             {
+        #                 "text": "No Bus Available",
+        #                 "viewclass": "OneLineListItem",
+        #             }
+        #         )
+        #     else:
+        #         for x in result:
+        #             items.append(
+        #                 {
+        #                     "text": f"{x[0]}",
+        #                     "viewclass": "OneLineListItem",
+        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+        #                 }
+        #             )
+        # elif self.ids.add_trip_location_fld.text == location_list[1]:
+        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=2 AND status=1'
+        #     self.mycursor.execute(sql)
+        #     result = self.mycursor.fetchall()
+        #     if not result:
+        #         items.append(
+        #             {
+        #                 "text": "No Bus Available",
+        #                 "viewclass": "OneLineListItem",
+        #             }
+        #         )
+        #     else:
+        #         for x in result:
+        #             items.append(
+        #                 {
+        #                     "text": f"{x[0]}",
+        #                     "viewclass": "OneLineListItem",
+        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+        #                 }
+        #             )
+        # elif self.ids.add_trip_location_fld.text == location_list[2]:
+        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=3 AND status=1'
+        #     self.mycursor.execute(sql)
+        #     result = self.mycursor.fetchall()
+        #     if not result:
+        #         items.append(
+        #             {
+        #                 "text": "No Bus Available",
+        #                 "viewclass": "OneLineListItem",
+        #             }
+        #         )
+        #     else:
+        #         for x in result:
+        #             items.append(
+        #                 {
+        #                     "text": f"{x[0]}",
+        #                     "viewclass": "OneLineListItem",
+        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+        #                 }
+        #             )
+        # elif self.ids.add_trip_location_fld.text == location_list[3]:
+        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=4 AND status=1'
+        #     self.mycursor.execute(sql)
+        #     result = self.mycursor.fetchall()
+        #     if not result:
+        #         items.append(
+        #             {
+        #                 "text": "No Bus Available",
+        #                 "viewclass": "OneLineListItem",
+        #             }
+        #         )
+        #     else:
+        #         for x in result:
+        #             items.append(
+        #                 {
+        #                     "text": f"{x[0]}",
+        #                     "viewclass": "OneLineListItem",
+        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+        #                 }
+        #             )
+        # else:
+        #     sql = 'SELECT bus_name FROM bus WHERE status=1'
+        #     self.mycursor.execute(sql)
+        #     result = self.mycursor.fetchall()
+        #     if not result:
+        #         items.append(
+        #             {
+        #                 "text": "No Bus Available",
+        #                 "viewclass": "OneLineListItem",
+        #             }
+        #         )
+        #     else:
+        #         for x in result:
+        #             items.append(
+        #                 {
+        #                     "text": f"{x[0]}",
+        #                     "viewclass": "OneLineListItem",
+        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
+        #                 }
+        #             )
         self.menu = MDDropdownMenu(
             caller=self.ids.add_trip_bus_fld,
             items=items,
