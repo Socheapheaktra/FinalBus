@@ -260,12 +260,16 @@ class AdminWindow(MDBoxLayout):
             pass
 
     def search_transaction(self, user_id="", search=False):
-        sql = 'SELECT DISTINCT user_id FROM booking'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        uid_list = list()
-        for x in result:
-            uid_list.append(x[0])
+        # sql = 'SELECT DISTINCT user_id FROM booking'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        # for x in result:
+        #     uid_list.append(x[0])
+
+        req = requests.request("GET",
+                               "http://127.0.0.1:5000/getDistinctUserID")
+        response = req.json()
+        uid_list = response['data']
 
         def add_transaction_item(transaction_detail):
             self.ids.transaction.add_widget(transaction_detail)
@@ -279,67 +283,75 @@ class AdminWindow(MDBoxLayout):
                 for uid in uid_list:
                     if int(user_id) == uid:
                         self.ids.transaction.clear_widgets()
+                        body = {
+                            "uid": uid
+                        }
+                        req = requests.request("POST",
+                                               "http://127.0.0.1:5000/searchTransaction",
+                                               json=body)
+
+                        response = req.json()
                         # Get booking_id FROM booking
-                        booking = list()
-                        sql = 'SELECT id FROM booking ' \
-                              'WHERE user_id = %s ' \
-                              'ORDER BY booking_date DESC'
-                        values = [uid, ]
-                        self.mycursor.execute(sql, values)
-                        result = self.mycursor.fetchall()
-                        for x in result:
-                            booking.append(x[0])
-
-                        # Get booking_date and price FROM booking
-                        for booking_id in booking:
-                            sql = 'SELECT booking_date, payment, status FROM booking ' \
-                                  'WHERE id = %s'
-                            values = [booking_id, ]
-                            self.mycursor.execute(sql, values)
-                            result = self.mycursor.fetchone()
-                            booking_date = result[0]
-                            price = result[1]
-                            paid_status = "Paid" if result[2] == 1 else "Not Paid"
-
-                        # Get seat_name FROM booking
-                            seat = list()
-                            sql = 'SELECT seat_name FROM bus_seat ' \
-                                  'WHERE id IN (SELECT seat_id FROM booking_detail WHERE booking_id = %s)'
-                            values = [booking_id, ]
-                            self.mycursor.execute(sql, values)
-                            result = self.mycursor.fetchall()
-                            for x in result:
-                                seat.append(x[0])
-
-                        # Get trip_id
-                            sql = 'SELECT DISTINCT trip_id FROM booking_detail ' \
-                                  'WHERE booking_id = %s'
-                            values = [booking_id, ]
-                            self.mycursor.execute(sql, values)
-                            result = self.mycursor.fetchone()
-                            trip_id = result[0]
+                        # booking = list()
+                        # sql = 'SELECT id FROM booking ' \
+                        #       'WHERE user_id = %s ' \
+                        #       'ORDER BY booking_date DESC'
+                        # values = [uid, ]
+                        # self.mycursor.execute(sql, values)
+                        # result = self.mycursor.fetchall()
+                        # for x in result:
+                        #     booking.append(x[0])
+                        #
+                        # # Get booking_date and price FROM booking
+                        # for booking_id in booking:
+                        #     sql = 'SELECT booking_date, payment, status FROM booking ' \
+                        #           'WHERE id = %s'
+                        #     values = [booking_id, ]
+                        #     self.mycursor.execute(sql, values)
+                        #     result = self.mycursor.fetchone()
+                        #     booking_date = result[0]
+                        #     price = result[1]
+                        #     paid_status = "Paid" if result[2] == 1 else "Not Paid"
+                        #
+                        # # Get seat_name FROM booking
+                        #     seat = list()
+                        #     sql = 'SELECT seat_name FROM bus_seat ' \
+                        #           'WHERE id IN (SELECT seat_id FROM booking_detail WHERE booking_id = %s)'
+                        #     values = [booking_id, ]
+                        #     self.mycursor.execute(sql, values)
+                        #     result = self.mycursor.fetchall()
+                        #     for x in result:
+                        #         seat.append(x[0])
+                        #
+                        # # Get trip_id
+                        #     sql = 'SELECT DISTINCT trip_id FROM booking_detail ' \
+                        #           'WHERE booking_id = %s'
+                        #     values = [booking_id, ]
+                        #     self.mycursor.execute(sql, values)
+                        #     result = self.mycursor.fetchone()
+                        #     trip_id = result[0]
 
                         # Get destination and bus_name
-                            sql = 'SELECT locations.loc_name, bus.bus_name ' \
-                                  'FROM trip ' \
-                                  'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
-                                  'INNER JOIN bus ON trip.bus_id = bus.id ' \
-                                  'WHERE trip.id = %s'
-                            values = [trip_id, ]
-                            self.mycursor.execute(sql, values)
-                            result = self.mycursor.fetchone()
-                            destination = result[0]
-                            bus_name = result[1]
-
+                        #     sql = 'SELECT locations.loc_name, bus.bus_name ' \
+                        #           'FROM trip ' \
+                        #           'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+                        #           'INNER JOIN bus ON trip.bus_id = bus.id ' \
+                        #           'WHERE trip.id = %s'
+                        #     values = [trip_id, ]
+                        #     self.mycursor.execute(sql, values)
+                        #     result = self.mycursor.fetchone()
+                        #     destination = result[0]
+                        #     bus_name = result[1]
+                        for data in response['data']:
                             tran = Transaction(
-                                booking_id=str(booking_id),
-                                trip_id=str(trip_id),
-                                destination=destination,
-                                booking_date=str(booking_date),
-                                price=str(price),
-                                bus_name=bus_name,
-                                seat=",".join(seat),
-                                paid_status=paid_status,
+                                booking_id=data['booking_id'],
+                                trip_id=data['trip_id'],
+                                destination=data['destination'],
+                                booking_date=data['booking_date'],
+                                price=data['price'],
+                                bus_name=data['bus_name'],
+                                seat=data['seat'],
+                                paid_status=data['paid_status'],
                                 on_release=lambda a=Transaction: self.show_transaction_detail(a)
                             )
                             add_transaction_item(tran)
@@ -363,55 +375,11 @@ class AdminWindow(MDBoxLayout):
         # self.mycursor.execute(sql)
         # result = self.mycursor.fetchall()
         req = requests.request("GET",
-                               "http://127.0.0.1:5000/showTransactionDetail")
+                               "http://127.0.0.1:5000/showTransaction")
         response = req.json()
         if not response['data']:
             self.ids.transaction.add_widget(NoData())
         else:
-            # for x in result:
-            #     booking.append(x[0])
-            #
-            # for booking_id in booking:
-            #     # Get booking_date and price from booking
-            #     sql = 'SELECT booking_date, payment, status FROM booking ' \
-            #           'WHERE id = %s'
-            #     values = [booking_id, ]
-            #     self.mycursor.execute(sql, values)
-            #     result = self.mycursor.fetchone()
-            #     booking_date = result[0]
-            #     price = result[1]
-            #     paid_status = "Paid" if result[2] == 1 else "Not Paid"
-            #
-            #     # Get seat_name from booking
-            #     seat = list()
-            #     sql = 'SELECT seat_name FROM bus_seat ' \
-            #           'WHERE id IN (SELECT seat_id FROM booking_detail WHERE booking_id = %s)'
-            #     values = [booking_id, ]
-            #     self.mycursor.execute(sql, values)
-            #     result = self.mycursor.fetchall()
-            #     for x in result:
-            #         seat.append(x[0])
-            #
-            #     # Get trip_id
-            #     sql = 'SELECT DISTINCT trip_id FROM booking_detail ' \
-            #           'WHERE booking_id = %s'
-            #     values = [booking_id, ]
-            #     self.mycursor.execute(sql, values)
-            #     result = self.mycursor.fetchone()
-            #     trip_id = result[0]
-            #
-            #     # Get destination and bus name
-            #     sql = 'SELECT locations.loc_name, bus.bus_name ' \
-            #           'FROM trip ' \
-            #           'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
-            #           'INNER JOIN bus ON trip.bus_id = bus.id ' \
-            #           'WHERE trip.id = %s'
-            #     values = [trip_id, ]
-            #     self.mycursor.execute(sql, values)
-            #     result = self.mycursor.fetchone()
-            #     destination = result[0]
-            #     bus_name = result[1]
-
             for data in response['data']:
                 self.ids.transaction.add_widget(
                     Transaction(
@@ -433,38 +401,27 @@ class AdminWindow(MDBoxLayout):
             )
 
     def show_transaction_detail(self, booking):
-        transaction_detail = TransactionSummary()
+        body = {
+            'booking_id': booking.booking_id,
+            "trip_id": booking.trip_id
+        }
 
-        # Get username
-        sql = 'SELECT users.user_name FROM booking ' \
-              'INNER JOIN users ON booking.user_id = users.user_id ' \
-              'WHERE booking.id = %s'
-        values = [booking.booking_id, ]
-        self.mycursor.execute(sql, values)
-        result = self.mycursor.fetchone()
-        username = result[0]
-        transaction_detail.username = username
-
-        sql = 'SELECT locations.loc_name, trip.departure_date, trip.departure_time, bus.price ' \
-              'FROM trip ' \
-              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
-              'INNER JOIN bus ON trip.bus_id = bus.id ' \
-              'WHERE trip.id = %s'
-        values = [booking.trip_id, ]
-        self.mycursor.execute(sql, values)
-        result = self.mycursor.fetchall()
-        for x in result:
-            transaction_detail.destination = x[0]
-            transaction_detail.departure_date = f"{x[1]} {x[2]}"
-            transaction_detail.unit_price = f"{x[3]}"
-
-        transaction_detail.seat_no = booking.seat
-        transaction_detail.total_payment = booking.price
-        transaction_detail.passenger = str(len(booking.seat.split(",")))
-        transaction_detail.paid_status = booking.paid_status
+        req = requests.request("POST",
+                               "http://127.0.0.1:5000/showTransactionDetail",
+                               json=body)
+        response = req.json()
 
         self.ids.transaction_summary.clear_widgets()
-        self.ids.transaction_summary.add_widget(transaction_detail)
+        self.ids.transaction_summary.add_widget(TransactionSummary(
+            username=response['data']['username'],
+            destination=response['data']['destination'],
+            departure_date=response['data']['departure_date'],
+            unit_price=response['data']['unit_price'],
+            seat_no=booking.seat,
+            total_payment=booking.price,
+            passenger=str(len(booking.seat.split(","))),
+            paid_status=booking.paid_status
+        ))
 
         self.goto_transaction_detail()
 
@@ -1589,7 +1546,7 @@ class AdminWindow(MDBoxLayout):
         self.ids.scrn_mngr.current = "scrn_update_bus"
 
     def goto_transaction(self):
-        self.show_transaction()
+        # self.show_transaction()
         if self.ids.scrn_mngr.current == "scrn_transaction_detail":
             self.ids.scrn_mngr.transition.direction = "right"
         else:

@@ -255,6 +255,7 @@
                     text: "Transaction Detail"
                     on_release:
                         nav_drawer.set_state("close")
+                        root.show_transaction()
                         root.goto_transaction()
                 MDNavigationDrawerDivider:
                     color: 0, 0, 0, .5
