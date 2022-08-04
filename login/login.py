@@ -13,13 +13,6 @@ class LoginWindow(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.dialog = None
-        # self.mydb = mysql.connector.connect(
-        #     host="localhost",
-        #     user="root",
-        #     passwd="",
-        #     database="bus_reservation"
-        # )
-        # self.mycursor = self.mydb.cursor()
 
     def validate_user(self, username, password):
         body = {
