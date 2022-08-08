@@ -8,6 +8,7 @@ from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.card import MDCard
 from kivymd.uix.behaviors import RectangularElevationBehavior
+from kivy.metrics import dp
 
 from kivy.properties import StringProperty
 
@@ -90,6 +91,7 @@ class AdminWindow(MDBoxLayout):
 
         self.show_user_table()
 
+    # API in progress
     def show_user_table(self):
         self.ids.user_table_content.clear_widgets()
         sql = 'SELECT user_id, user_name, user_pass, first_name, last_name, date_of_birth, ' \
@@ -102,10 +104,11 @@ class AdminWindow(MDBoxLayout):
                     MDLabel(
                         text=f"{i}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
 
+    # API in progress
     def show_trip_table(self):
         self.ids.trip_table_content.clear_widgets()
         sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price, trip.seat, trip.departure_date, trip.departure_time, trip.status ' \
@@ -120,7 +123,7 @@ class AdminWindow(MDBoxLayout):
                     MDLabel(
                         text=f"{x[0]}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
                 self.ids.trip_table_content.add_widget(
@@ -179,6 +182,7 @@ class AdminWindow(MDBoxLayout):
         else:
             pass
 
+    # API in progress
     def show_bus_table(self):
         self.ids.bus_table_content.clear_widgets()
         sql = 'SELECT bus.id, bus.bus_name, bus_type.type_name, bus.bus_desc, ' \
@@ -198,7 +202,7 @@ class AdminWindow(MDBoxLayout):
                     MDLabel(
                         text=f"{x[0]}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
                 self.ids.bus_table_content.add_widget(
@@ -212,28 +216,28 @@ class AdminWindow(MDBoxLayout):
                     MDLabel(
                         text=f"{x[2]}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
                 self.ids.bus_table_content.add_widget(
                     MDLabel(
                         text=f"{x[3]}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
                 self.ids.bus_table_content.add_widget(
                     MDLabel(
                         text=f"{x[4]}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
                 self.ids.bus_table_content.add_widget(
                     MDLabel(
                         text=f"$ {x[5]}",
                         size_hint_y=None,
-                        height=50
+                        height=dp(50)
                     )
                 )
                 if status == "Active":
@@ -241,7 +245,7 @@ class AdminWindow(MDBoxLayout):
                         MDLabel(
                             text=f"{status}",
                             size_hint_y=None,
-                            height=50,
+                            height=dp(50),
                             theme_text_color="Custom",
                             text_color=(0, 1, 0, 1)
                         )
@@ -251,7 +255,7 @@ class AdminWindow(MDBoxLayout):
                         MDLabel(
                             text=f"{status}",
                             size_hint_y=None,
-                            height=50,
+                            height=dp(50),
                             theme_text_color="Custom",
                             text_color=(1, 0, 0, 1)
                         )
@@ -259,6 +263,7 @@ class AdminWindow(MDBoxLayout):
         else:
             pass
 
+    # API in progress
     def search_transaction(self, user_id="", search=False):
         # sql = 'SELECT DISTINCT user_id FROM booking'
         # self.mycursor.execute(sql)
@@ -366,7 +371,7 @@ class AdminWindow(MDBoxLayout):
                     )
                 )
 
-
+    # API in progress
     def show_transaction(self):
         self.ids.transaction.clear_widgets()
         # booking = list()
@@ -400,6 +405,7 @@ class AdminWindow(MDBoxLayout):
                 )
             )
 
+    # API in progress
     def show_transaction_detail(self, booking):
         body = {
             'booking_id': booking.booking_id,
@@ -442,6 +448,7 @@ class AdminWindow(MDBoxLayout):
         )
         self.dialog.open()
 
+    # API in progress
     def confirm_update_transaction(self, booking_id):
         self.close_dialog()
         try:
@@ -480,7 +487,7 @@ class AdminWindow(MDBoxLayout):
         self.close_dialog()
         self.goto_transaction()
 
-    #FIXME (DONE)
+    # API in progress
     def add_user(self, username, password, email):
         #GET REGISTERED USERNAMES AND EMAILS
         username_ls = []
@@ -534,7 +541,7 @@ class AdminWindow(MDBoxLayout):
                     )
                     self.dialog.open()
 
-    #FIXME (DONE)
+    # API in progress
     def update_user(self, username, password, email, phone, role):
         username_list = []
         role_list = ['Admin', 'User']
@@ -610,7 +617,7 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
-    #FIXME (DONE)
+    # API in progress
     def remove_user_dialog(self, username):
         username_list = []
         sql = 'SELECT user_name FROM users'
@@ -637,7 +644,7 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
 
-    #FIXME (DONE)
+    # API in progress
     def remove_user(self, username):
         self.close_dialog()
         try:
@@ -670,7 +677,7 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
 
-    #FIXME (DONE)
+    # API in progress
     def add_bus(self, name, location, price, bus_type):
         # Get Location_id (Foreign Key)
         sql = 'SELECT loc_id FROM locations ' \
@@ -733,6 +740,7 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
+    # API in progress
     def update_bus(self, bus_id, price, bus_status):
         status_list = ["Active", "Inactive"]
         id_list = []
@@ -796,7 +804,7 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
-    #FIXME
+    # API in progress
     def add_trip(self, location, bus, depart_date, depart_time):
         if location == "" or bus == "" or depart_date == "" or depart_time == "":
             self.dialog = MDDialog(
@@ -867,6 +875,7 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
+    # API in progress
     def open_location_menu(self):
         sql = 'SELECT loc_name FROM locations'
         self.mycursor.execute(sql)
@@ -908,6 +917,7 @@ class AdminWindow(MDBoxLayout):
             self.ids.bus_location_fld.focus = False
         self.menu.dismiss()
 
+    # API in progress
     def open_bus_menu(self):
         sql = 'SELECT loc_name FROM locations'
         self.mycursor.execute(sql)
@@ -1112,7 +1122,7 @@ class AdminWindow(MDBoxLayout):
             self.ids.update_trip_departure_time_fld.focus = False
         self.menu.dismiss()
 
-    #FIXME (DONE)
+    # API in progress
     def update_trip(self, trip_id, depart_date, depart_time):
         # Check if user has input in all field
         if trip_id == "" or depart_date == "" or depart_time == "":
@@ -1195,6 +1205,7 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
 
+    # API in progress
     def confirm_end_trip(self, trip_id):
         self.close_dialog()
         try:
@@ -1229,6 +1240,7 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
 
+    # API in progress
     def open_trip_menu(self):
         sql = 'SELECT id FROM trip WHERE status = 1'
         self.mycursor.execute(sql)
@@ -1251,6 +1263,7 @@ class AdminWindow(MDBoxLayout):
         )
         self.menu.open()
 
+    # API in progress
     def set_trip_detail(self, trip_id):
         self.ids.update_trip_detail.clear_widgets()
         self.ids.update_trip_id_fld.text = trip_id
@@ -1302,7 +1315,7 @@ class AdminWindow(MDBoxLayout):
 
         self.menu.dismiss()
 
-    #FIXME (DONE)
+    # API in progress
     def update_password(self, old_pass, new_pass, confirm_pass):
         sql = 'SELECT user_pass FROM users WHERE user_name=%s'
         values = [self.ids.nav_drawer_header.text, ]
@@ -1359,7 +1372,7 @@ class AdminWindow(MDBoxLayout):
                         )
                         self.dialog.open()
 
-    #FIXME (DONE)
+    # API in progress
     def update_info(self, first_name, last_name, phone, email, dob):
         if first_name == "" or last_name == "":
             f_name = None
@@ -1438,10 +1451,10 @@ class AdminWindow(MDBoxLayout):
 
     def departure_date_picker(self):
         self.departure_date = MDDatePicker(
-            primary_color=(0,0,0,1),
-            selector_color=(0,0,0,1),
-            text_button_color=(0,0,0,1),
-            text_current_color=(0,0,0,1)
+            primary_color=(0, 0, 0, 1),
+            selector_color=(0, 0, 0, 1),
+            text_button_color=(0, 0, 0, 1),
+            text_current_color=(0, 0, 0, 1)
         )
         self.departure_date.bind(on_save=self.save_departure_date, on_cancel=self.close_departure_date_picker)
         self.departure_date.open()
@@ -1463,6 +1476,7 @@ class AdminWindow(MDBoxLayout):
         self.ids.scrn_mngr.current = "main_scrn"
         self.ids.toolbar.right_action_items = []
 
+    # API in progress
     def goto_edit_profile(self):
         sql = 'SELECT first_name, last_name, phone, email, date_of_birth ' \
               'FROM users WHERE user_name=%s'
