@@ -12,14 +12,11 @@
 <CustomButton@MDRaisedButton>
     md_bg_color: 0, 0, 0, 1
 <TransactionSummary>
-    orientation: "horizontal"
-    size_hint: 1, None
-    height: self.minimum_height
-    spacing: 20
+    cols: 2
     padding: 20, 20
     GridLayout:
         size_hint: .4, None
-        spacing: 20
+        spacing: 50
         cols: 1
         MDLabel:
             text: "Purchased by"
@@ -39,7 +36,7 @@
             text: "Status"
     GridLayout:
         size_hint: .6, None
-        spacing: 20
+        spacing: 50
         cols: 1
         MDLabel:
             id: username_fld
@@ -76,11 +73,12 @@
         font_style: "H2"
         pos_hint: {'center_x': .5, 'center_y': .45}
 <Transaction>
-    radius: [6, 6, 6, 6]
+    radius: [12, 12, 12, 12]
     style: "elevated"
-    elevation: 6
+    elevation: 20
     padding: 100, 20
     size_hint_y: None
+    height: dp(100)
     GridLayout:
         cols: 3
         spacing: 20
@@ -98,16 +96,12 @@
             text: "USD " + root.price
         MDBoxLayout:
             orientation: "horizontal"
-            size_hint_y: None
-            height: self.minimum_height
             MDIcon:
                 icon: "bus"
             MDLabel:
                 text: root.bus_name
         MDBoxLayout:
             orientation: "horizontal"
-            size_hint_y: None
-            height: self.minimum_height
             MDIcon:
                 icon: "car-seat"
             MDLabel:
@@ -847,7 +841,7 @@
                                         root.open_trip_menu()
                             MDBoxLayout:
                                 orientation: "vertical"
-                                spacing: 10
+                                spacing: 50
                                 GridLayout:
                                     cols: 5
                                     padding: 20, 0
@@ -1111,7 +1105,7 @@
                         MDBoxLayout:
                             id: transaction
                             orientation: "vertical"
-                            spacing: 20
+                            spacing: 30
                             padding: main_win.size[0]/8, 50
                             size_hint_y: None
                             height: self.minimum_height
@@ -1141,25 +1135,21 @@
                         MDCard:
                             radius: [12, 12, 12, 12]
                             orientation: "vertical"
-                            padding: 50, 20
+                            padding: 50, 30
+                            spacing: 20
                             size_hint_y: None
-                            height: self.minimum_height
-                            GridLayout:
-                                cols: 1
+                            height: dp(300)
+                            MDLabel:
+                                text: "Ticket Summary"
+                                bold: True
+                                font_size: 32
                                 size_hint_y: None
-                                height: self.minimum_height
-                                spacing: 20
-                                MDLabel:
-                                    text: "Ticket Summary"
-                                    bold: True
-                                    font_size: 32
-                                    size_hint_y: None
-                                MDBoxLayout:
-                                    id: transaction_summary
-                                    size_hint_y: None
-                                MDLabel:
-                                    text: ""
+                            MDBoxLayout:
+                                id: transaction_summary
+                            MDLabel:
+                                text: ""
                         CustomButton:
+                            id: btn_update_transaction
                             text: "Update Status"
                             on_release:
                                 root.update_transaction()

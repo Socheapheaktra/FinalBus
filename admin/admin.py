@@ -7,8 +7,9 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.card import MDCard
-from kivymd.uix.behaviors import RectangularElevationBehavior
+from kivymd.uix.behaviors import FakeRectangularElevationBehavior
 from kivy.metrics import dp
+from kivy.uix.gridlayout import GridLayout
 
 from kivy.properties import StringProperty
 
@@ -45,7 +46,7 @@ class NoData(MDFloatLayout):
     text = "No Data"
     icon = "database"
 
-class Transaction(MDCard, RectangularElevationBehavior):
+class Transaction(MDCard, FakeRectangularElevationBehavior):
     booking_id = StringProperty()
     trip_id = StringProperty()
     destination = StringProperty()
@@ -63,7 +64,7 @@ class Transaction(MDCard, RectangularElevationBehavior):
         global selected_booking_id
         selected_booking_id = int(self.booking_id)
 
-class TransactionSummary(MDBoxLayout):
+class TransactionSummary(GridLayout):
     username = StringProperty()
     destination = StringProperty()
     departure_date = StringProperty()
@@ -91,179 +92,288 @@ class AdminWindow(MDBoxLayout):
 
         self.show_user_table()
 
-    # API in progress
+    # API Done
     def show_user_table(self):
         self.ids.user_table_content.clear_widgets()
-        sql = 'SELECT user_id, user_name, user_pass, first_name, last_name, date_of_birth, ' \
-              'email, phone, user_desc, status FROM users'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        for x in result:
-            for i in x:
-                self.ids.user_table_content.add_widget(
-                    MDLabel(
-                        text=f"{i}",
-                        size_hint_y=None,
-                        height=dp(50)
+        # sql = 'SELECT user_id, user_name, user_pass, first_name, last_name, date_of_birth, ' \
+        #       'email, phone, user_desc, status FROM users'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        try:
+            req = requests.request("GET", "http://127.0.0.1:5000/showUserTable")
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
                     )
+                ]
+            )
+            self.dialog.open()
+        else:
+            response = req.json()
+            if response['status'] is False:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
                 )
+                self.dialog.open()
+            else:
+                for data in response['data']:
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['user_id'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['username'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['password'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['first_name'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['last_name'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['dob'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['email'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['phone'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['role'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.user_table_content.add_widget(
+                        MDLabel(
+                            text=data['status'],
+                            size_hint_y=None,
+                            height=dp(50),
+                            theme_text_color="Custom",
+                            text_color=(0, 1, 0, 1) if data['status'] == "Active" else (1, 0, 0, 1)
+                        )
+                    )
 
-    # API in progress
+    # API Done
     def show_trip_table(self):
         self.ids.trip_table_content.clear_widgets()
-        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, bus.price, trip.seat, trip.departure_date, trip.departure_time, trip.status ' \
-              'FROM trip ' \
-              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
-              'INNER JOIN bus ON trip.bus_id = bus.id'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        if result:
-            for x in result:
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[0]}",
-                        size_hint_y=None,
-                        height=dp(50)
+        # sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, ' \
+        #       'bus.price, trip.seat, trip.departure_date, ' \
+        #       'trip.departure_time, trip.status ' \
+        #       'FROM trip ' \
+        #       'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+        #       'INNER JOIN bus ON trip.bus_id = bus.id'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        try:
+            req = requests.request("GET", "http://127.0.0.1:5000/showTripTable")
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
                     )
-                )
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[1]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[2]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"$ {x[3]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[4]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[5]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[6]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                status = "Active" if x[7] == 1 else "Inactive"
-                text_color = [0, 1, 0, 1] if x[7] == 1 else [1, 0, 0, 1]
-                self.ids.trip_table_content.add_widget(
-                    MDLabel(
-                        text=status,
-                        theme_text_color="Custom",
-                        text_color=text_color,
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
+                ]
+            )
+            self.dialog.open()
         else:
-            pass
+            response = req.json()
+            if response['data']:
+                for data in response['data']:
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['trip_id'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['bus_name'],
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['location'],
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=f"$ {data['price']}",
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['seat'],
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['departure_date'],
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['departure_time'],
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.trip_table_content.add_widget(
+                        MDLabel(
+                            text=data['status'],
+                            theme_text_color="Custom",
+                            text_color=(0, 1, 0, 1) if data['status'] == "Active" else (1, 0, 0, 1),
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+            else:
+                pass
 
-    # API in progress
+    # API Done
     def show_bus_table(self):
-        self.ids.bus_table_content.clear_widgets()
-        sql = 'SELECT bus.id, bus.bus_name, bus_type.type_name, bus.bus_desc, ' \
-              'bus.num_of_seat, bus.price, bus.status ' \
-              'FROM bus ' \
-              'INNER JOIN bus_type ON bus.type_id = bus_type.id'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        if result:
-            for x in result:
-                status = "Active"
-                if x[6] == 0:
-                    status = "Inactive"
-                else:
-                    status = "Active"
-                self.ids.bus_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[0]}",
-                        size_hint_y=None,
-                        height=dp(50)
+        # self.ids.bus_table_content.clear_widgets()
+        # sql = 'SELECT bus.id, bus.bus_name, bus_type.type_name, bus.bus_desc, ' \
+        #       'bus.num_of_seat, bus.price, bus.status ' \
+        #       'FROM bus ' \
+        #       'INNER JOIN bus_type ON bus.type_id = bus_type.id'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        try:
+            req = requests.request("GET", "http://127.0.0.1:5000/showBusTable")
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
                     )
-                )
-                self.ids.bus_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[1]}",
-                        size_hint_y=None,
-                        height=50
-                    )
-                )
-                self.ids.bus_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[2]}",
-                        size_hint_y=None,
-                        height=dp(50)
-                    )
-                )
-                self.ids.bus_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[3]}",
-                        size_hint_y=None,
-                        height=dp(50)
-                    )
-                )
-                self.ids.bus_table_content.add_widget(
-                    MDLabel(
-                        text=f"{x[4]}",
-                        size_hint_y=None,
-                        height=dp(50)
-                    )
-                )
-                self.ids.bus_table_content.add_widget(
-                    MDLabel(
-                        text=f"$ {x[5]}",
-                        size_hint_y=None,
-                        height=dp(50)
-                    )
-                )
-                if status == "Active":
-                    self.ids.bus_table_content.add_widget(
-                        MDLabel(
-                            text=f"{status}",
-                            size_hint_y=None,
-                            height=dp(50),
-                            theme_text_color="Custom",
-                            text_color=(0, 1, 0, 1)
-                        )
-                    )
-                else:
-                    self.ids.bus_table_content.add_widget(
-                        MDLabel(
-                            text=f"{status}",
-                            size_hint_y=None,
-                            height=dp(50),
-                            theme_text_color="Custom",
-                            text_color=(1, 0, 0, 1)
-                        )
-                    )
+                ]
+            )
+            self.dialog.open()
         else:
-            pass
+            response = req.json()
+            if response['data']:
+                for data in response['data']:
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['bus_id'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['bus_name'],
+                            size_hint_y=None,
+                            height=50
+                        )
+                    )
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['bus_type'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['bus_desc'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['seat'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['price'],
+                            size_hint_y=None,
+                            height=dp(50)
+                        )
+                    )
+                    self.ids.bus_table_content.add_widget(
+                        MDLabel(
+                            text=data['status'],
+                            size_hint_y=None,
+                            height=dp(50),
+                            theme_text_color="Custom",
+                            text_color=(0, 1, 0, 1) if data['status'] == "Active" else (1, 0, 0, 1)
+                        )
+                    )
+            else:
+                pass
 
-    # API in progress
+    # API Done
     def search_transaction(self, user_id="", search=False):
         # sql = 'SELECT DISTINCT user_id FROM booking'
         # self.mycursor.execute(sql)
@@ -371,7 +481,7 @@ class AdminWindow(MDBoxLayout):
                     )
                 )
 
-    # API in progress
+    # API Done
     def show_transaction(self):
         self.ids.transaction.clear_widgets()
         # booking = list()
@@ -379,33 +489,47 @@ class AdminWindow(MDBoxLayout):
         #       'ORDER BY booking_date DESC'
         # self.mycursor.execute(sql)
         # result = self.mycursor.fetchall()
-        req = requests.request("GET",
-                               "http://127.0.0.1:5000/showTransaction")
-        response = req.json()
-        if not response['data']:
-            self.ids.transaction.add_widget(NoData())
+        try:
+            req = requests.request("GET",
+                                   "http://127.0.0.1:5000/showTransaction")
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
         else:
-            for data in response['data']:
+            response = req.json()
+            if not response['data']:
+                self.ids.transaction.add_widget(NoData())
+            else:
+                for data in response['data']:
+                    self.ids.transaction.add_widget(
+                        Transaction(
+                            booking_id=str(data['booking_id']),
+                            trip_id=str(data['trip_id']),
+                            destination=data['destination'],
+                            booking_date=str(data['booking_date']),
+                            price=str(data['price']),
+                            bus_name=data['bus_name'],
+                            seat=data['seat'],
+                            paid_status=data['paid_status'],
+                            on_release=lambda a=Transaction: self.show_transaction_detail(a)
+                        )
+                    )
                 self.ids.transaction.add_widget(
-                    Transaction(
-                        booking_id=str(data['booking_id']),
-                        trip_id=str(data['trip_id']),
-                        destination=data['destination'],
-                        booking_date=str(data['booking_date']),
-                        price=str(data['price']),
-                        bus_name=data['bus_name'],
-                        seat=data['seat'],
-                        paid_status=data['paid_status'],
-                        on_release=lambda a=Transaction: self.show_transaction_detail(a)
+                    MDLabel(
+                        text=""
                     )
                 )
-            self.ids.transaction.add_widget(
-                MDLabel(
-                    text=""
-                )
-            )
 
-    # API in progress
+    # API Done
     def show_transaction_detail(self, booking):
         body = {
             'booking_id': booking.booking_id,
@@ -428,6 +552,7 @@ class AdminWindow(MDBoxLayout):
             passenger=str(len(booking.seat.split(","))),
             paid_status=booking.paid_status
         ))
+        self.ids.btn_update_transaction.disabled = True if booking.paid_status == "Paid" else False
 
         self.goto_transaction_detail()
 
@@ -448,20 +573,25 @@ class AdminWindow(MDBoxLayout):
         )
         self.dialog.open()
 
-    # API in progress
+    # API Done
     def confirm_update_transaction(self, booking_id):
         self.close_dialog()
         try:
-            sql = 'UPDATE booking, payment_offline ' \
-                  'SET booking.status = 1, payment_offline.pay_status = 1 ' \
-                  'WHERE booking.id = %s AND payment_offline.booking_id = %s'
-            values = [booking_id, booking_id, ]
-            self.mycursor.execute(sql, values)
-            self.mydb.commit()
-        except:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/updateTransaction",
+                json={"booking_id": booking_id}
+            )
+            # sql = 'UPDATE booking, payment_offline ' \
+            #       'SET booking.status = 1, payment_offline.pay_status = 1 ' \
+            #       'WHERE booking.id = %s AND payment_offline.booking_id = %s'
+            # values = [booking_id, booking_id, ]
+            # self.mycursor.execute(sql, values)
+            # self.mydb.commit()
+        except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
-                text="An error occurred while update transaction status please try again!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -471,111 +601,53 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            self.dialog = MDDialog(
-                title="Success!",
-                text="Transaction updated successfully!",
-                buttons=[
-                    MDFlatButton(
-                        text="Close",
-                        on_release=lambda x:self.return_to_transaction()
-                    )
-                ]
-            )
-            self.dialog.open()
+            response = req.json()
+            if response['status'] is True:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=lambda x:self.return_to_transaction()
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=lambda x: self.return_to_transaction()
+                        )
+                    ]
+                )
 
     def return_to_transaction(self):
         self.close_dialog()
         self.goto_transaction()
+        self.show_transaction()
 
-    # API in progress
+    # API Done
     def add_user(self, username, password, email):
-        #GET REGISTERED USERNAMES AND EMAILS
-        username_ls = []
-        email_ls = []
-        sql = 'SELECT user_name, email FROM users'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        for x in result:
-            username_ls.append(x[0])
-            email_ls.append(x[1])
-        if username in username_ls:
-            self.ids.add_username_fld.error = True
-        elif password == "":
-            self.ids.add_password_fld.error = True
-        else:
-            if email == "":
-                self.ids.add_email_fld.helper_text = "Invalid Email"
-                self.ids.add_email_fld.error = True
-            elif email in email_ls:
-                self.ids.add_email_fld.helper_text = "This Email has already been used"
-                self.ids.add_email_fld.error = True
-            else:
-                try:
-                    sql = 'INSERT INTO users (user_name, user_pass, email) ' \
-                          'VALUES (%s, %s, %s)'
-                    values = [username, password, email, ]
-                    self.mycursor.execute(sql, values)
-                    self.mydb.commit()
-                except:
-                    self.dialog = MDDialog(
-                        title="Error!",
-                        text="Cannot add new account",
-                        buttons=[
-                            MDFlatButton(
-                                text="Close",
-                                on_release=self.close_dialog
-                            )
-                        ]
-                    )
-                    self.dialog.open()
-                else:
-                    self.dialog = MDDialog(
-                        title="Success!",
-                        text="New account added successfully!",
-                        buttons=[
-                            MDFlatButton(
-                                text="Close",
-                                on_release=self.close_dialog
-                            )
-                        ]
-                    )
-                    self.dialog.open()
-
-    # API in progress
-    def update_user(self, username, password, email, phone, role):
-        username_list = []
-        role_list = ['Admin', 'User']
-        sql = 'SELECT user_name FROM users'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        for x in result:
-            username_list.append(x[0])
-        if username not in username_list:
-            self.ids.update_username_fld.error = True
-        else:
-            if password != "":
-                u_pass = password
-            else:
-                sql = 'SELECT user_pass FROM users WHERE user_name = %s'
-                values = [username, ]
-                self.mycursor.execute(sql, values)
-                result = self.mycursor.fetchone()
-                u_pass = result[0]
-            if email != "":
-                u_email = email
-            else:
-                sql = 'SELECT email FROM users WHERE user_name = %s'
-                values = [username, ]
-                self.mycursor.execute(sql, values)
-                result = self.mycursor.fetchone()
-                u_email = result[0]
-        if phone == "":
-            u_phone = None
-        else:
-            u_phone = phone
-        if role not in role_list:
+        try:
+            body = {
+                "username": username,
+                "password": password,
+                "email": email
+            }
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/admin/addUser",
+                json=body
+            )
+        except Exception as e:
             self.dialog = MDDialog(
-                title="Please Select A Role!",
+                title="Error!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -585,17 +657,11 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            u_role = role
-            try:
-                sql = 'UPDATE users SET user_pass=%s, email=%s, phone=%s, user_desc=%s ' \
-                      'WHERE user_name=%s'
-                values = [u_pass, u_email, u_phone, u_role, username, ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-            except:
+            response = req.json()
+            if response['status'] is False:
                 self.dialog = MDDialog(
                     title="Error!",
-                    text="Cannot Update User Info!",
+                    text=response['message'],
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -607,7 +673,7 @@ class AdminWindow(MDBoxLayout):
             else:
                 self.dialog = MDDialog(
                     title="Success!",
-                    text=f"User {username} has been updated successfully!",
+                    text=response['message'],
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -617,45 +683,261 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
-    # API in progress
-    def remove_user_dialog(self, username):
-        username_list = []
-        sql = 'SELECT user_name FROM users'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        for x in result:
-            username_list.append(x[0])
-        if username not in username_list:
-            self.ids.remove_username_fld.error = True
-        else:
+                self.ids.add_username_fld.text = ""
+                self.ids.add_password_fld.text = ""
+                self.ids.add_email_fld.text = ""
+        # GET REGISTERED USERNAMES AND EMAILS
+        # username_ls = []
+        # email_ls = []
+        # sql = 'SELECT user_name, email FROM users'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        # for x in result:
+        #     username_ls.append(x[0])
+        #     email_ls.append(x[1])
+        # if username in username_ls:
+        #     self.ids.add_username_fld.error = True
+        # elif password == "":
+        #     self.ids.add_password_fld.error = True
+        # else:
+        #     if email == "":
+        #         self.ids.add_email_fld.helper_text = "Invalid Email"
+        #         self.ids.add_email_fld.error = True
+        #     elif email in email_ls:
+        #         self.ids.add_email_fld.helper_text = "This Email has already been used"
+        #         self.ids.add_email_fld.error = True
+        #     else:
+        #         try:
+        #             sql = 'INSERT INTO users (user_name, user_pass, email) ' \
+        #                   'VALUES (%s, %s, %s)'
+        #             values = [username, password, email, ]
+        #             self.mycursor.execute(sql, values)
+        #             self.mydb.commit()
+        #         except:
+        #             self.dialog = MDDialog(
+        #                 title="Error!",
+        #                 text="Cannot add new account",
+        #                 buttons=[
+        #                     MDFlatButton(
+        #                         text="Close",
+        #                         on_release=self.close_dialog
+        #                     )
+        #                 ]
+        #             )
+        #             self.dialog.open()
+        #         else:
+        #             self.dialog = MDDialog(
+        #                 title="Success!",
+        #                 text="New account added successfully!",
+        #                 buttons=[
+        #                     MDFlatButton(
+        #                         text="Close",
+        #                         on_release=self.close_dialog
+        #                     )
+        #                 ]
+        #             )
+        #             self.dialog.open()
+
+    # API Done
+    def update_user(self, username, password, email, phone, role):
+        body = {
+            "username": username,
+            "password": password,
+            "email": email,
+            "phone": phone,
+            "role": role
+        }
+        try:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/admin/updateUser",
+                json=body
+            )
+        except Exception as e:
             self.dialog = MDDialog(
-                title="Please Confirm!",
-                text=f"Are you sure you want to remove user {username}?",
+                title="Error!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
-                        text="No",
+                        text="Close",
                         on_release=self.close_dialog
-                    ),
-                    MDFlatButton(
-                        text="Yes",
-                        on_release=lambda x: self.remove_user(username)
                     )
                 ]
             )
             self.dialog.open()
+        else:
+            response = req.json()
+            if response['status'] is False:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+        # username_list = []
+        # role_list = ['Admin', 'User']
+        # sql = 'SELECT user_name FROM users'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        # for x in result:
+        #     username_list.append(x[0])
+        # if username not in username_list:
+        #     self.ids.update_username_fld.error = True
+        # else:
+        #     if password != "":
+        #         u_pass = password
+        #     else:
+        #         sql = 'SELECT user_pass FROM users WHERE user_name = %s'
+        #         values = [username, ]
+        #         self.mycursor.execute(sql, values)
+        #         result = self.mycursor.fetchone()
+        #         u_pass = result[0]
+        #     if email != "":
+        #         u_email = email
+        #     else:
+        #         sql = 'SELECT email FROM users WHERE user_name = %s'
+        #         values = [username, ]
+        #         self.mycursor.execute(sql, values)
+        #         result = self.mycursor.fetchone()
+        #         u_email = result[0]
+        # if phone == "":
+        #     u_phone = None
+        # else:
+        #     u_phone = phone
+        # if role not in role_list:
+        #     self.dialog = MDDialog(
+        #         title="Please Select A Role!",
+        #         buttons=[
+        #             MDFlatButton(
+        #                 text="Close",
+        #                 on_release=self.close_dialog
+        #             )
+        #         ]
+        #     )
+        #     self.dialog.open()
+        # else:
+        #     u_role = role
+        #     try:
+        #         sql = 'UPDATE users SET user_pass=%s, email=%s, phone=%s, user_desc=%s ' \
+        #               'WHERE user_name=%s'
+        #         values = [u_pass, u_email, u_phone, u_role, username, ]
+        #         self.mycursor.execute(sql, values)
+        #         self.mydb.commit()
+        #     except:
+        #         self.dialog = MDDialog(
+        #             title="Error!",
+        #             text="Cannot Update User Info!",
+        #             buttons=[
+        #                 MDFlatButton(
+        #                     text="Close",
+        #                     on_release=self.close_dialog
+        #                 )
+        #             ]
+        #         )
+        #         self.dialog.open()
+        #     else:
+        #         self.dialog = MDDialog(
+        #             title="Success!",
+        #             text=f"User {username} has been updated successfully!",
+        #             buttons=[
+        #                 MDFlatButton(
+        #                     text="Close",
+        #                     on_release=self.close_dialog
+        #                 )
+        #             ]
+        #         )
+        #         self.dialog.open()
 
-    # API in progress
+    # API Done
+    def remove_user_dialog(self, username):
+        # username_list = []
+        # sql = 'SELECT user_name FROM users'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        # for x in result:
+        #     username_list.append(x[0])
+        try:
+            req = requests.request("GET", "http://127.0.0.1:5000/admin/getUsername")
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            response = req.json()
+            if response['status'] is False:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                if username not in response['data']:
+                    self.ids.remove_username_fld.error = True
+                else:
+                    self.dialog = MDDialog(
+                        title="Please Confirm!",
+                        text=f"Are you sure you want to remove user {username}?",
+                        buttons=[
+                            MDFlatButton(
+                                text="No",
+                                on_release=self.close_dialog
+                            ),
+                            MDFlatButton(
+                                text="Yes",
+                                on_release=lambda x: self.remove_user(username)
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+
+    # API Done
     def remove_user(self, username):
         self.close_dialog()
         try:
-            sql = 'DELETE FROM users WHERE user_name=%s'
-            values = [username, ]
-            self.mycursor.execute(sql, values)
-            self.mydb.commit()
-        except:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/admin/removeUser",
+                json={"username": username}
+            )
+            # sql = 'DELETE FROM users WHERE user_name=%s'
+            # values = [username, ]
+            # self.mycursor.execute(sql, values)
+            # self.mydb.commit()
+        except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
-                text=f"Cannot remove user {username}!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -665,17 +947,33 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            self.dialog = MDDialog(
-                title="Success!",
-                text=f"User {username} has been removed!",
-                buttons=[
-                    MDFlatButton(
-                        text="Close",
-                        on_release=self.close_dialog
-                    )
-                ]
-            )
-            self.dialog.open()
+            response = req.json()
+            if response['status'] is False:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+            else:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+
+                self.ids.remove_username_fld.text = ""
 
     # API in progress
     def add_bus(self, name, location, price, bus_type):
@@ -875,37 +1173,53 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
 
-    # API in progress
+    # API Done
     def open_location_menu(self):
-        sql = 'SELECT loc_name FROM locations'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
+        # sql = 'SELECT loc_name FROM locations'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
         items = list()
-        for x in result:
-            items.append(
-                {
-                    "text": f"{x[0]}",
-                    "viewclass": "OneLineListItem",
-                    "on_release": lambda x=f"{x[0]}": self.set_trip_location(x)
-                }
+        try:
+            req = requests.request("GET", "http://127.0.0.1:5000/admin/getLocationNames")
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
             )
-        if self.ids.scrn_mngr.current == "scrn_add_trip":
-            self.menu = MDDropdownMenu(
-                caller=self.ids.add_trip_location_fld,
-                items=items,
-                width_mult=4,
-                ver_growth="down",
-                hor_growth="right",
-            )
-        elif self.ids.scrn_mngr.current == "scrn_add_bus":
-            self.menu = MDDropdownMenu(
-                caller=self.ids.bus_location_fld,
-                items=items,
-                width_mult=4,
-                ver_growth="down",
-                hor_growth="right",
-            )
-        self.menu.open()
+            self.dialog.open()
+        else:
+            response = req.json()
+            for data in response['data']:
+                items.append(
+                    {
+                        "text": f"{data}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=f"{data}": self.set_trip_location(x)
+                    }
+                )
+            if self.ids.scrn_mngr.current == "scrn_add_trip":
+                self.menu = MDDropdownMenu(
+                    caller=self.ids.add_trip_location_fld,
+                    items=items,
+                    width_mult=4,
+                    ver_growth="down",
+                    hor_growth="right",
+                )
+            elif self.ids.scrn_mngr.current == "scrn_add_bus":
+                self.menu = MDDropdownMenu(
+                    caller=self.ids.bus_location_fld,
+                    items=items,
+                    width_mult=4,
+                    ver_growth="down",
+                    hor_growth="right",
+                )
+            self.menu.open()
 
     def set_trip_location(self, location):
         if self.ids.scrn_mngr.current == "scrn_add_trip":
@@ -917,167 +1231,106 @@ class AdminWindow(MDBoxLayout):
             self.ids.bus_location_fld.focus = False
         self.menu.dismiss()
 
-    # API in progress
+    # API Done
     def open_bus_menu(self):
-        sql = 'SELECT loc_name FROM locations'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        location_list = list()
+        # sql = 'SELECT loc_name FROM locations'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        # location_list = list()
+        # items = list()
+        # for location in result:
+        #     location_list.append(location[0])
+        # for location in location_list:
+        #     if self.ids.add_trip_location_fld.text == location:
+        #         sql = 'SELECT bus.bus_name FROM bus ' \
+        #               'INNER JOIN locations ON bus.loc_id = locations.loc_id ' \
+        #               'WHERE locations.loc_name = %s AND bus.status = 1'
+        #         values = [location, ]
+        #         self.mycursor.execute(sql, values)
+        #         result = self.mycursor.fetchall()
+        #         if not result:
+        #             items.append(
+        #                 {
+        #                     "text": "No Bus Available",
+        #                     "viewclass": "OneLineListItem"
+        #                 }
+        #             )
+        #         else:
+        #             for x in result:
+        #                 items.append(
+        #                     {
+        #                         "text": f"{x[0]}",
+        #                         "viewclass": "OneLineListItem",
+        #                         "on_release": lambda a=f"{x[0]}": self.set_trip_bus(a)
+        #                     }
+        #                 )
+        #     elif self.ids.add_trip_location_fld.text == "":
+        #         sql = 'SELECT bus_name FROM bus WHERE status = 1'
+        #         self.mycursor.execute(sql)
+        #         result = self.mycursor.fetchall()
+        #         if not result:
+        #             items.append(
+        #                 {
+        #                     "text": "No Bus Available",
+        #                     "viewclass": "OneLineListItem"
+        #                 }
+        #             )
+        #         else:
+        #             for x in result:
+        #                 items.append(
+        #                     {
+        #                         "text": f"{x[0]}",
+        #                         "viewclass": "OneLineListItem",
+        #                         "on_release": lambda a=f"{x[0]}": self.set_trip_bus(a)
+        #                     }
+        #                 )
         items = list()
-        for location in result:
-            location_list.append(location[0])
-        for location in location_list:
-            if self.ids.add_trip_location_fld.text == location:
-                sql = 'SELECT bus.bus_name FROM bus ' \
-                      'INNER JOIN locations ON bus.loc_id = locations.loc_id ' \
-                      'WHERE locations.loc_name = %s AND bus.status = 1'
-                values = [location, ]
-                self.mycursor.execute(sql, values)
-                result = self.mycursor.fetchall()
-                if not result:
+        location = self.ids.add_trip_location_fld.text
+        try:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/getActiveBus",
+                json={'location': location}
+            )
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            response = req.json()
+            if response['status'] is True:
+                if not response['data']:
                     items.append(
                         {
-                            "text": "No Bus Available",
+                            "text": f"{response['message']}",
                             "viewclass": "OneLineListItem"
                         }
                     )
                 else:
-                    for x in result:
+                    for bus in response['data']:
                         items.append(
                             {
-                                "text": f"{x[0]}",
+                                "text": f"{bus}",
                                 "viewclass": "OneLineListItem",
-                                "on_release": lambda a=f"{x[0]}": self.set_trip_bus(a)
+                                "on_release": lambda a=f"{bus}": self.set_trip_bus(a)
                             }
                         )
-            elif self.ids.add_trip_location_fld.text == "":
-                sql = 'SELECT bus_name FROM bus WHERE status = 1'
-                self.mycursor.execute(sql)
-                result = self.mycursor.fetchall()
-                if not result:
-                    items.append(
-                        {
-                            "text": "No Bus Available",
-                            "viewclass": "OneLineListItem"
-                        }
-                    )
-                else:
-                    for x in result:
-                        items.append(
-                            {
-                                "text": f"{x[0]}",
-                                "viewclass": "OneLineListItem",
-                                "on_release": lambda a=f"{x[0]}": self.set_trip_bus(a)
-                            }
-                        )
-        # if self.ids.add_trip_location_fld.text == location_list[0]:
-        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=1 AND status=1'
-        #     self.mycursor.execute(sql)
-        #     result = self.mycursor.fetchall()
-        #     if not result:
-        #         items.append(
-        #             {
-        #                 "text": "No Bus Available",
-        #                 "viewclass": "OneLineListItem",
-        #             }
-        #         )
-        #     else:
-        #         for x in result:
-        #             items.append(
-        #                 {
-        #                     "text": f"{x[0]}",
-        #                     "viewclass": "OneLineListItem",
-        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-        #                 }
-        #             )
-        # elif self.ids.add_trip_location_fld.text == location_list[1]:
-        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=2 AND status=1'
-        #     self.mycursor.execute(sql)
-        #     result = self.mycursor.fetchall()
-        #     if not result:
-        #         items.append(
-        #             {
-        #                 "text": "No Bus Available",
-        #                 "viewclass": "OneLineListItem",
-        #             }
-        #         )
-        #     else:
-        #         for x in result:
-        #             items.append(
-        #                 {
-        #                     "text": f"{x[0]}",
-        #                     "viewclass": "OneLineListItem",
-        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-        #                 }
-        #             )
-        # elif self.ids.add_trip_location_fld.text == location_list[2]:
-        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=3 AND status=1'
-        #     self.mycursor.execute(sql)
-        #     result = self.mycursor.fetchall()
-        #     if not result:
-        #         items.append(
-        #             {
-        #                 "text": "No Bus Available",
-        #                 "viewclass": "OneLineListItem",
-        #             }
-        #         )
-        #     else:
-        #         for x in result:
-        #             items.append(
-        #                 {
-        #                     "text": f"{x[0]}",
-        #                     "viewclass": "OneLineListItem",
-        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-        #                 }
-        #             )
-        # elif self.ids.add_trip_location_fld.text == location_list[3]:
-        #     sql = 'SELECT bus_name FROM bus WHERE loc_id=4 AND status=1'
-        #     self.mycursor.execute(sql)
-        #     result = self.mycursor.fetchall()
-        #     if not result:
-        #         items.append(
-        #             {
-        #                 "text": "No Bus Available",
-        #                 "viewclass": "OneLineListItem",
-        #             }
-        #         )
-        #     else:
-        #         for x in result:
-        #             items.append(
-        #                 {
-        #                     "text": f"{x[0]}",
-        #                     "viewclass": "OneLineListItem",
-        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-        #                 }
-        #             )
-        # else:
-        #     sql = 'SELECT bus_name FROM bus WHERE status=1'
-        #     self.mycursor.execute(sql)
-        #     result = self.mycursor.fetchall()
-        #     if not result:
-        #         items.append(
-        #             {
-        #                 "text": "No Bus Available",
-        #                 "viewclass": "OneLineListItem",
-        #             }
-        #         )
-        #     else:
-        #         for x in result:
-        #             items.append(
-        #                 {
-        #                     "text": f"{x[0]}",
-        #                     "viewclass": "OneLineListItem",
-        #                     "on_release": lambda x=f"{x[0]}": self.set_trip_bus(x)
-        #                 }
-        #             )
-        self.menu = MDDropdownMenu(
-            caller=self.ids.add_trip_bus_fld,
-            items=items,
-            width_mult=4,
-            ver_growth="down",
-            hor_growth="right",
-        )
-        self.menu.open()
+            self.menu = MDDropdownMenu(
+                caller=self.ids.add_trip_bus_fld,
+                items=items,
+                width_mult=4,
+                ver_growth="down",
+                hor_growth="right",
+            )
+            self.menu.open()
 
     def set_trip_bus(self, bus):
         self.ids.add_trip_bus_fld.text = bus
@@ -1122,7 +1375,7 @@ class AdminWindow(MDBoxLayout):
             self.ids.update_trip_departure_time_fld.focus = False
         self.menu.dismiss()
 
-    # API in progress
+    # API Done
     def update_trip(self, trip_id, depart_date, depart_time):
         # Check if user has input in all field
         if trip_id == "" or depart_date == "" or depart_time == "":
@@ -1144,15 +1397,26 @@ class AdminWindow(MDBoxLayout):
             update_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             try:
-                sql = 'UPDATE trip SET departure_date=%s, departure_time=%s, updated_at=%s ' \
-                      'WHERE id=%s'
-                values = [date, depart_time, update_time, trip_id, ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-            except:
+                # sql = 'UPDATE trip SET departure_date=%s, departure_time=%s, updated_at=%s ' \
+                #       'WHERE id=%s'
+                # values = [date, depart_time, update_time, trip_id, ]
+                # self.mycursor.execute(sql, values)
+                # self.mydb.commit()
+                body = {
+                    "trip_id": trip_id,
+                    "departure_date": date,
+                    "departure_time": depart_time,
+                    "update_at": update_time
+                }
+                req = requests.request(
+                    "POST",
+                    "http://127.0.0.1:5000/updateTrip",
+                    json=body
+                )
+            except Exception as e:
                 self.dialog = MDDialog(
                     title="Error!",
-                    text="Cannot update trip at the moment!",
+                    text=f"{e}",
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -1162,18 +1426,34 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
             else:
-                self.dialog = MDDialog(
-                    title="Success!",
-                    text="Your Trip has been updated!",
-                    buttons=[
-                        MDFlatButton(
-                            text="Close",
-                            on_release=self.close_dialog
-                        )
-                    ]
-                )
-                self.dialog.open()
-                self.set_trip_detail(trip_id)
+                response = req.json()
+                if response['status'] is True:
+                    self.dialog = MDDialog(
+                        title="Success!",
+                        text=response['message'],
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+                    self.set_trip_detail(trip_id)
+                    self.ids.update_trip_departure_date_fld.secondary_text = "Add Departure Date"
+                    self.ids.update_trip_departure_time_fld.text = ""
+                else:
+                    self.dialog = MDDialog(
+                        title="Error!",
+                        text=response['message'],
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
 
     def end_trip(self, trip_id):
         """ SET Trip Status to False and Bus Status to True """
@@ -1205,20 +1485,25 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
 
-    # API in progress
+    # API Done
     def confirm_end_trip(self, trip_id):
         self.close_dialog()
         try:
-            sql = 'UPDATE trip, bus ' \
-                  'SET trip.status = 0, bus.status = 1 ' \
-                  'WHERE trip.id = %s AND trip.bus_id = bus.id'
-            values = [trip_id, ]
-            self.mycursor.execute(sql, values)
-            self.mydb.commit()
-        except:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/endTrip",
+                json={"trip_id": trip_id}
+            )
+            # sql = 'UPDATE trip, bus, bus_seat ' \
+            #       'SET trip.status = 0, bus.status = 1, bus_seat.status = 1 ' \
+            #       'WHERE trip.id = %s AND trip.bus_id = bus.id AND trip.bus_id = bus_seat.bus_id'
+            # values = [trip_id, ]
+            # self.mycursor.execute(sql, values)
+            # self.mydb.commit()
+        except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
-                text="Something's wrong try again later!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -1228,9 +1513,49 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
+            response = req.json()
+            if response['status'] is True:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+
+                self.ids.update_trip_detail.clear_widgets()
+                self.ids.update_trip_id_fld.text = ""
+                self.ids.update_trip_departure_date_fld.secondary_text = "Add Departure Date"
+                self.ids.update_trip_departure_time_fld.text = ""
+            else:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+
+    # API Done
+    def open_trip_menu(self):
+        # sql = 'SELECT id FROM trip WHERE status = 1'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        items = list()
+        try:
+            req = requests.request("GET", "http://127.0.0.1:5000/getActiveTrip")
+        except Exception as e:
             self.dialog = MDDialog(
-                title="Success!",
-                text="Your trip has ended!",
+                title="Error!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -1239,75 +1564,99 @@ class AdminWindow(MDBoxLayout):
                 ]
             )
             self.dialog.open()
-
-    # API in progress
-    def open_trip_menu(self):
-        sql = 'SELECT id FROM trip WHERE status = 1'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        items = list()
-        for x in result:
-            items.append(
-                {
-                    "text": f"{x[0]}",
-                    "viewclass": "OneLineListItem",
-                    "on_release": lambda x=f"{x[0]}": self.set_trip_detail(x)
-                }
+        else:
+            response = req.json()
+            if not response['data']:
+                items.append(
+                    {
+                        "text": "No Trip Available",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x: self.menu.dismiss()
+                    }
+                )
+            for trip_id in response['data']:
+                items.append(
+                    {
+                        "text": f"{trip_id}",
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda a=f"{trip_id}": self.set_trip_detail(a)
+                    }
+                )
+            self.menu = MDDropdownMenu(
+                caller=self.ids.update_trip_id_fld,
+                items=items,
+                width_mult=4,
+                ver_growth="down",
+                hor_growth="right",
             )
-        self.menu = MDDropdownMenu(
-            caller=self.ids.update_trip_id_fld,
-            items=items,
-            width_mult=4,
-            ver_growth="down",
-            hor_growth="right",
-        )
-        self.menu.open()
+            self.menu.open()
 
-    # API in progress
+    # API Done
     def set_trip_detail(self, trip_id):
         self.ids.update_trip_detail.clear_widgets()
         self.ids.update_trip_id_fld.text = trip_id
 
-        sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, trip.departure_date, trip.departure_time ' \
-              'FROM trip ' \
-              'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
-              'INNER JOIN bus ON trip.bus_id = bus.id ' \
-              'WHERE trip.id=%s'
-        values = [trip_id, ]
-        self.mycursor.execute(sql, values)
-        result = self.mycursor.fetchall()
-        for x in result:
+        # sql = 'SELECT trip.id, bus.bus_name, locations.loc_name, trip.departure_date, trip.departure_time ' \
+        #       'FROM trip ' \
+        #       'INNER JOIN locations ON trip.loc_id = locations.loc_id ' \
+        #       'INNER JOIN bus ON trip.bus_id = bus.id ' \
+        #       'WHERE trip.id=%s'
+        # values = [trip_id, ]
+        # self.mycursor.execute(sql, values)
+        # result = self.mycursor.fetchall()
+        try:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/getTripDetail",
+                json={"trip_id": trip_id}
+            )
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            response = req.json()
+            data = response['data']
+        # for x in result:
             self.ids.update_trip_detail.add_widget(
                 MDLabel(
-                    text=f"{x[0]}",
+                    text=data['trip_id'],
                     size_hint_y=None,
                     height=50
                 )
             )
             self.ids.update_trip_detail.add_widget(
                 MDLabel(
-                    text=f"{x[1]}",
+                    text=data['bus_name'],
                     size_hint_y=None,
                     height=50
                 )
             )
             self.ids.update_trip_detail.add_widget(
                 MDLabel(
-                    text=f"{x[2]}",
+                    text=data['location'],
                     size_hint_y=None,
                     height=50
                 )
             )
             self.ids.update_trip_detail.add_widget(
                 MDLabel(
-                    text=f"{x[3]}",
+                    text=data['departure_date'],
                     size_hint_y=None,
                     height=50
                 )
             )
             self.ids.update_trip_detail.add_widget(
                 MDLabel(
-                    text=f"{x[4]}",
+                    text=data['departure_time'],
                     size_hint_y=None,
                     height=50
                 )
@@ -1315,14 +1664,14 @@ class AdminWindow(MDBoxLayout):
 
         self.menu.dismiss()
 
-    # API in progress
+    # API Done
     def update_password(self, old_pass, new_pass, confirm_pass):
-        sql = 'SELECT user_pass FROM users WHERE user_name=%s'
-        values = [self.ids.nav_drawer_header.text, ]
-        self.mycursor.execute(sql, values)
-        result = self.mycursor.fetchall()
-        u_pass = result[0][0]
-        print(u_pass)
+        # sql = 'SELECT user_pass FROM users WHERE user_name=%s'
+        # values = [self.ids.nav_drawer_header.text, ]
+        # self.mycursor.execute(sql, values)
+        # result = self.mycursor.fetchall()
+        # u_pass = result[0][0]
+        username = self.ids.nav_drawer_header.text
         if old_pass == "" or new_pass == "" or confirm_pass == "":
             self.dialog = MDDialog(
                 title="All Fields Required!",
@@ -1336,44 +1685,100 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            if old_pass != u_pass:
-                self.ids.old_pass.error = True
+            try:
+                body = {
+                    "username": username,
+                    "old_pass": old_pass,
+                    "new_pass": new_pass,
+                    "confirm_pass": confirm_pass
+                }
+                req = requests.request(
+                    "POST",
+                    "http://127.0.0.1:5000/updateAdminPassword",
+                    json=body
+                )
+            except Exception as e:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{e}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
             else:
-                if new_pass != confirm_pass:
-                    self.ids.confirm_pass.error = True
-                else:
-                    try:
-                        sql = 'UPDATE users SET user_pass = %s WHERE user_name =%s'
-                        values = [new_pass, self.ids.nav_drawer_header.text, ]
-                        self.mycursor.execute(sql, values)
-                        self.mydb.commit()
-                    except:
-                        self.dialog = MDDialog(
-                            title="Error!",
-                            text="Cannot Change Password!",
-                            buttons=[
-                                MDFlatButton(
-                                    text="Close",
-                                    on_release=self.close_dialog
-                                )
-                            ]
-                        )
-                        self.dialog.open()
-                    else:
-                        self.dialog = MDDialog(
-                            title="Success!",
-                            text="Your Password has been updated!",
-                            buttons=[
-                                MDFlatButton(
-                                    text="Close",
-                                    on_release=self.close_dialog
-                                )
-                            ]
-                        )
-                        self.dialog.open()
+                response = req.json()
+                if response['status'] is True:
+                    self.dialog = MDDialog(
+                        title="Success!",
+                        text=f"{response['message']}",
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
 
-    # API in progress
+                    self.ids.old_pass.text = ""
+                    self.ids.new_pass.text = ""
+                    self.ids.confirm_pass.text = ""
+                else:
+                    self.dialog = MDDialog(
+                        title="Error!",
+                        text=f"{response['message']}",
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+
+            # if old_pass != u_pass:
+            #     self.ids.old_pass.error = True
+            # else:
+            #     if new_pass != confirm_pass:
+            #         self.ids.confirm_pass.error = True
+            #     else:
+            #         try:
+            #             sql = 'UPDATE users SET user_pass = %s WHERE user_name =%s'
+            #             values = [new_pass, self.ids.nav_drawer_header.text, ]
+            #             self.mycursor.execute(sql, values)
+            #             self.mydb.commit()
+            #         except:
+            #             self.dialog = MDDialog(
+            #                 title="Error!",
+            #                 text="Cannot Change Password!",
+            #                 buttons=[
+            #                     MDFlatButton(
+            #                         text="Close",
+            #                         on_release=self.close_dialog
+            #                     )
+            #                 ]
+            #             )
+            #             self.dialog.open()
+            #         else:
+            #             self.dialog = MDDialog(
+            #                 title="Success!",
+            #                 text="Your Password has been updated!",
+            #                 buttons=[
+            #                     MDFlatButton(
+            #                         text="Close",
+            #                         on_release=self.close_dialog
+            #                     )
+            #                 ]
+            #             )
+            #             self.dialog.open()
+
+    # API Done
     def update_info(self, first_name, last_name, phone, email, dob):
+        username = self.ids.nav_drawer_header.text
         if first_name == "" or last_name == "":
             f_name = None
             l_name = None
@@ -1394,20 +1799,36 @@ class AdminWindow(MDBoxLayout):
         else:
             email_addr = email
             try:
-                sql = 'UPDATE users SET ' \
-                      'first_name = %s, ' \
-                      'last_name = %s, ' \
-                      'phone = %s, ' \
-                      'email = %s, ' \
-                      'date_of_birth = %s ' \
-                      'WHERE user_name = %s '
-                values = [f_name, l_name, phone_num, email_addr, u_dob, self.ids.nav_drawer_header.text, ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-            except:
+                # sql = 'UPDATE users SET ' \
+                #       'first_name = %s, ' \
+                #       'last_name = %s, ' \
+                #       'phone = %s, ' \
+                #       'email = %s, ' \
+                #       'date_of_birth = %s ' \
+                #       'WHERE user_name = %s '
+                # values = [f_name, l_name, phone_num, email_addr, u_dob, self.ids.nav_drawer_header.text, ]
+                # self.mycursor.execute(sql, values)
+                # self.mydb.commit()
+
+                body = {
+                    "username": username,
+                    "first_name": f_name,
+                    "last_name": l_name,
+                    "phone": phone_num,
+                    "email": email_addr,
+                    "dob": u_dob
+                }
+
+                req = requests.request(
+                    "POST",
+                    "http://127.0.0.1:5000/updateAdminInfo",
+                    json=body
+                )
+
+            except Exception as e:
                 self.dialog = MDDialog(
                     title="Error!",
-                    text="Cannot Update User",
+                    text=f"{e}",
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -1417,17 +1838,32 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
             else:
-                self.dialog = MDDialog(
-                    title="Success!",
-                    text="User Info Updated Successfully!",
-                    buttons=[
-                        MDFlatButton(
-                            text="Close",
-                            on_release=self.close_dialog
-                        )
-                    ]
-                )
-                self.dialog.open()
+                response = req.json()
+                if response['status'] is False:
+                    self.dialog = MDDialog(
+                        title="Error!",
+                        text=f"{response['message']}",
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+                else:
+                    self.goto_edit_profile()
+                    self.dialog = MDDialog(
+                        title="Success",
+                        text="Your information has been updated!",
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
 
     def dob_date_picker(self):
         self.dob_date = MDDatePicker(
@@ -1476,20 +1912,62 @@ class AdminWindow(MDBoxLayout):
         self.ids.scrn_mngr.current = "main_scrn"
         self.ids.toolbar.right_action_items = []
 
-    # API in progress
+    # API Done
     def goto_edit_profile(self):
-        sql = 'SELECT first_name, last_name, phone, email, date_of_birth ' \
-              'FROM users WHERE user_name=%s'
-        values = [self.ids.nav_drawer_header.text, ]
-        self.mycursor.execute(sql, values)
-        result = self.mycursor.fetchone()
-        self.ids.first_name_fld.text = result[0] if result[0] else ""
-        self.ids.last_name_fld.text = result[1] if result[1] else ""
-        self.ids.phone_fld.text = result[2] if result[2] else ""
-        self.ids.email_fld.text = result[3] if result[3] else ""
-        self.ids.dob_fld.text = result[4] if result[4] else ""
-        self.ids.scrn_mngr.transition.direction = "left"
-        self.ids.scrn_mngr.current = "scrn_edit_profile"
+        # sql = 'SELECT first_name, last_name, phone, email, date_of_birth ' \
+        #       'FROM users WHERE user_name=%s'
+        # values = [self.ids.nav_drawer_header.text, ]
+        # self.mycursor.execute(sql, values)
+        # result = self.mycursor.fetchone()
+        # self.ids.first_name_fld.text = result[0] if result[0] else ""
+        # self.ids.last_name_fld.text = result[1] if result[1] else ""
+        # self.ids.phone_fld.text = result[2] if result[2] else ""
+        # self.ids.email_fld.text = result[3] if result[3] else ""
+        # self.ids.dob_fld.text = result[4] if result[4] else ""
+
+        username = self.ids.nav_drawer_header.text
+        try:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/getAdminInfo",
+                json={"username": username}
+            )
+        except Exception as e:
+            self.dialog = MDDialog(
+                title="Error!",
+                text=f"{e}",
+                buttons=[
+                    MDFlatButton(
+                        text="Close",
+                        on_release=self.close_dialog
+                    )
+                ]
+            )
+            self.dialog.open()
+        else:
+            response = req.json()
+            if response['status'] is True:
+                data = response['data']
+                self.ids.first_name_fld.text = data['first_name'] if data['first_name'] else ""
+                self.ids.last_name_fld.text = data['last_name'] if data['last_name'] else ""
+                self.ids.phone_fld.text = data['phone'] if data['phone'] else ""
+                self.ids.email_fld.text = data['email'] if data['email'] else ""
+                self.ids.dob_fld.text = data['dob'] if data['dob'] else ""
+
+                self.ids.scrn_mngr.transition.direction = "left"
+                self.ids.scrn_mngr.current = "scrn_edit_profile"
+            else:
+                self.dialog = MDDialog(
+                    title="Error!",
+                    text=f"{response['message']}",
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
 
     def goto_settings(self):
         self.ids.old_pass.text = ""
