@@ -975,24 +975,26 @@ class AdminWindow(MDBoxLayout):
 
                 self.ids.remove_username_fld.text = ""
 
-    # API in progress
+    # API Done
     def add_bus(self, name, location, price, bus_type):
-        # Get Location_id (Foreign Key)
-        sql = 'SELECT loc_id FROM locations ' \
-              'WHERE loc_name = %s'
-        values = [location, ]
-        self.mycursor.execute(sql, values)
-        result = self.mycursor.fetchone()
-        loc_id = result[0]
-
-        bus_type_list = ["Express", "VIP"]
-        if name == "" or price == "":
-            self.ids.bus_name_fld.error = True
-            self.ids.bus_price_fld.error = True
-        elif bus_type not in bus_type_list:
+        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        body = {
+            "bus_name": str(name),
+            "location": str(location),
+            "price": str(price),
+            "bus_type": str(bus_type),
+            "created_date": str(date),
+        }
+        try:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/admin/addBus",
+                json=body
+            )
+        except Exception as e:
             self.dialog = MDDialog(
-                title="All Field Required!",
-                text="Please Input All Field",
+                title="Error!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -1002,21 +1004,11 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            if bus_type == "Express":
-                type_id = 1
-            else:
-                type_id = 2
-            try:
-                sql = 'INSERT INTO bus (bus_name, loc_id, price, type_id, created_date) ' \
-                      'VALUES (%s,%s,%s,%s)'
-                values = [name, loc_id, float(price), type_id, str(date), ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-            except:
+            response = req.json()
+            if response['status'] is False:
                 self.dialog = MDDialog(
                     title="Error!",
-                    text="Cannot Add New Bus!",
+                    text=response['message'],
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -1028,7 +1020,7 @@ class AdminWindow(MDBoxLayout):
             else:
                 self.dialog = MDDialog(
                     title="Success!",
-                    text="New Bus Added Successfully!",
+                    text=response['message'],
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -1037,25 +1029,84 @@ class AdminWindow(MDBoxLayout):
                     ]
                 )
                 self.dialog.open()
+        # Get Location_id (Foreign Key)
+        # sql = 'SELECT loc_id FROM locations ' \
+        #       'WHERE loc_name = %s'
+        # values = [location, ]
+        # self.mycursor.execute(sql, values)
+        # result = self.mycursor.fetchone()
+        # loc_id = result[0]
+        #
+        # bus_type_list = ["Express", "VIP"]
+        # if name == "" or price == "":
+        #     self.ids.bus_name_fld.error = True
+        #     self.ids.bus_price_fld.error = True
+        # elif bus_type not in bus_type_list:
+        #     self.dialog = MDDialog(
+        #         title="All Field Required!",
+        #         text="Please Input All Field",
+        #         buttons=[
+        #             MDFlatButton(
+        #                 text="Close",
+        #                 on_release=self.close_dialog
+        #             )
+        #         ]
+        #     )
+        #     self.dialog.open()
+        # else:
+        #     date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #     if bus_type == "Express":
+        #         type_id = 1
+        #     else:
+        #         type_id = 2
+        #     try:
+        #         sql = 'INSERT INTO bus (bus_name, loc_id, price, type_id, created_date) ' \
+        #               'VALUES (%s,%s,%s,%s)'
+        #         values = [name, loc_id, float(price), type_id, str(date), ]
+        #         self.mycursor.execute(sql, values)
+        #         self.mydb.commit()
+        #     except:
+        #         self.dialog = MDDialog(
+        #             title="Error!",
+        #             text="Cannot Add New Bus!",
+        #             buttons=[
+        #                 MDFlatButton(
+        #                     text="Close",
+        #                     on_release=self.close_dialog
+        #                 )
+        #             ]
+        #         )
+        #         self.dialog.open()
+        #     else:
+        #         self.dialog = MDDialog(
+        #             title="Success!",
+        #             text="New Bus Added Successfully!",
+        #             buttons=[
+        #                 MDFlatButton(
+        #                     text="Close",
+        #                     on_release=self.close_dialog
+        #                 )
+        #             ]
+        #         )
+        #         self.dialog.open()
 
-    # API in progress
+    # API Done
     def update_bus(self, bus_id, price, bus_status):
-        status_list = ["Active", "Inactive"]
-        id_list = []
-        sql = 'SELECT id FROM bus'
-        self.mycursor.execute(sql)
-        result = self.mycursor.fetchall()
-        for x in result:
-            id_list.append(x[0])
-        if bus_id == "" or price == "":
-            self.ids.bus_id_fld.error = True
-            self.ids.update_price_fld.error = True
-        elif bus_id not in id_list:
-            self.ids.bus_id_fld. error = True
-        elif bus_status not in status_list:
+        body = {
+            "bus_id": str(bus_id),
+            "price": str(price),
+            "status": str(bus_status)
+        }
+        try:
+            req = requests.request(
+                "POST",
+                "http://127.0.0.1:5000/admin/updateBus",
+                json=body
+            )
+        except Exception as e:
             self.dialog = MDDialog(
-                title="All Field Required!",
-                text="Please input all field",
+                title="Error!",
+                text=f"{e}",
                 buttons=[
                     MDFlatButton(
                         text="Close",
@@ -1065,20 +1116,11 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            if bus_status == "Inactive":
-                status = 0
-            else:
-                status = 1
-            try:
-                sql = 'UPDATE bus SET price_per_seat=%s, status=%s ' \
-                      'WHERE id=%s '
-                values = [float(price), status, int(bus_id), ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-            except:
+            response = req.json()
+            if response['status'] is False:
                 self.dialog = MDDialog(
                     title="Error!",
-                    text="Cannot Update Bus at the moment!",
+                    text=response['message'],
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -1088,21 +1130,85 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
             else:
+                self.dialog = MDDialog(
+                    title="Success!",
+                    text=response['message'],
+                    buttons=[
+                        MDFlatButton(
+                            text="Close",
+                            on_release=self.close_dialog
+                        )
+                    ]
+                )
+                self.dialog.open()
+
                 self.ids.bus_id_fld.text = ""
                 self.ids.update_price_fld.text = ""
-                self.dialog = MDDialog(
-                    title="Success!",
-                    text="Updated Successfully!",
-                    buttons=[
-                        MDFlatButton(
-                            text="Close",
-                            on_release=self.close_dialog
-                        )
-                    ]
-                )
-                self.dialog.open()
+                self.ids.bus_status_fld.text = ""
 
-    # API in progress
+        # status_list = ["Active", "Inactive"]
+        # id_list = []
+        # sql = 'SELECT id FROM bus'
+        # self.mycursor.execute(sql)
+        # result = self.mycursor.fetchall()
+        # for x in result:
+        #     id_list.append(x[0])
+        # if bus_id == "" or price == "":
+        #     self.ids.bus_id_fld.error = True
+        #     self.ids.update_price_fld.error = True
+        # elif bus_id not in id_list:
+        #     self.ids.bus_id_fld. error = True
+        # elif bus_status not in status_list:
+        #     self.dialog = MDDialog(
+        #         title="All Field Required!",
+        #         text="Please input all field",
+        #         buttons=[
+        #             MDFlatButton(
+        #                 text="Close",
+        #                 on_release=self.close_dialog
+        #             )
+        #         ]
+        #     )
+        #     self.dialog.open()
+        # else:
+        #     if bus_status == "Inactive":
+        #         status = 0
+        #     else:
+        #         status = 1
+        #     try:
+        #         sql = 'UPDATE bus SET price_per_seat=%s, status=%s ' \
+        #               'WHERE id=%s '
+        #         values = [float(price), status, int(bus_id), ]
+        #         self.mycursor.execute(sql, values)
+        #         self.mydb.commit()
+        #     except:
+        #         self.dialog = MDDialog(
+        #             title="Error!",
+        #             text="Cannot Update Bus at the moment!",
+        #             buttons=[
+        #                 MDFlatButton(
+        #                     text="Close",
+        #                     on_release=self.close_dialog
+        #                 )
+        #             ]
+        #         )
+        #         self.dialog.open()
+        #     else:
+        #         self.ids.bus_id_fld.text = ""
+        #         self.ids.update_price_fld.text = ""
+        #         self.dialog = MDDialog(
+        #             title="Success!",
+        #             text="Updated Successfully!",
+        #             buttons=[
+        #                 MDFlatButton(
+        #                     text="Close",
+        #                     on_release=self.close_dialog
+        #                 )
+        #             ]
+        #         )
+        #         self.dialog.open()
+
+    # API Done
     def add_trip(self, location, bus, depart_date, depart_time):
         if location == "" or bus == "" or depart_date == "" or depart_time == "":
             self.dialog = MDDialog(
@@ -1117,36 +1223,22 @@ class AdminWindow(MDBoxLayout):
             )
             self.dialog.open()
         else:
-            sql = 'SELECT loc_id FROM locations WHERE loc_name=%s'
-            values = [location, ]
-            self.mycursor.execute(sql, values)
-            result = self.mycursor.fetchone()
-            loc_id = result[0]
-
-            sql = 'SELECT id FROM bus WHERE bus_name=%s'
-            values = [bus, ]
-            self.mycursor.execute(sql, values)
-            result = self.mycursor.fetchone()
-            bus_id = result[0]
-
-            temp = depart_date.split("-")
-            temp.reverse()
-            date = "-".join(temp)
-
-            time = f"{date} {depart_time}"
-
-            created_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+            body = {
+                "location": str(location),
+                "bus_name": str(bus),
+                "depart_date": str(depart_date),
+                "depart_time": str(depart_time)
+            }
             try:
-                sql = 'INSERT INTO trip(loc_id, bus_id, departure_date, departure_time, created_at) ' \
-                      'VALUES (%s, %s, %s, %s, %s)'
-                values = [loc_id, bus_id, date, time, created_date, ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-            except:
+                req = requests.request(
+                    "POST",
+                    "http://127.0.0.1:5000/addTrip",
+                    json=body
+                )
+            except Exception as e:
                 self.dialog = MDDialog(
                     title="Error!",
-                    text="Cannot Add New Trip!",
+                    text=f"{e}",
                     buttons=[
                         MDFlatButton(
                             text="Close",
@@ -1156,22 +1248,87 @@ class AdminWindow(MDBoxLayout):
                 )
                 self.dialog.open()
             else:
-                sql = 'UPDATE bus SET status=0 ' \
-                      'WHERE id=%s'
-                values = [bus_id, ]
-                self.mycursor.execute(sql, values)
-                self.mydb.commit()
-                self.dialog = MDDialog(
-                    title="Success!",
-                    text="New Trip Added Successfully!",
-                    buttons=[
-                        MDFlatButton(
-                            text="Close",
-                            on_release=self.close_dialog
-                        )
-                    ]
-                )
-                self.dialog.open()
+                response = req.json()
+                if response['status'] is False:
+                    self.dialog = MDDialog(
+                        title="Error!",
+                        text=response['message'],
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+                else:
+                    self.dialog = MDDialog(
+                        title="Success!",
+                        text=response['message'],
+                        buttons=[
+                            MDFlatButton(
+                                text="Close",
+                                on_release=self.close_dialog
+                            )
+                        ]
+                    )
+                    self.dialog.open()
+
+            # sql = 'SELECT loc_id FROM locations WHERE loc_name=%s'
+            # values = [location, ]
+            # self.mycursor.execute(sql, values)
+            # result = self.mycursor.fetchone()
+            # loc_id = result[0]
+            #
+            # sql = 'SELECT id FROM bus WHERE bus_name=%s'
+            # values = [bus, ]
+            # self.mycursor.execute(sql, values)
+            # result = self.mycursor.fetchone()
+            # bus_id = result[0]
+            #
+            # temp = depart_date.split("-")
+            # temp.reverse()
+            # date = "-".join(temp)
+            #
+            # time = f"{date} {depart_time}"
+            #
+            # created_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            #
+            # try:
+            #     sql = 'INSERT INTO trip(loc_id, bus_id, departure_date, departure_time, created_at) ' \
+            #           'VALUES (%s, %s, %s, %s, %s)'
+            #     values = [loc_id, bus_id, date, time, created_date, ]
+            #     self.mycursor.execute(sql, values)
+            #     self.mydb.commit()
+            # except:
+            #     self.dialog = MDDialog(
+            #         title="Error!",
+            #         text="Cannot Add New Trip!",
+            #         buttons=[
+            #             MDFlatButton(
+            #                 text="Close",
+            #                 on_release=self.close_dialog
+            #             )
+            #         ]
+            #     )
+            #     self.dialog.open()
+            # else:
+            #     sql = 'UPDATE bus SET status=0 ' \
+            #           'WHERE id=%s'
+            #     values = [bus_id, ]
+            #     self.mycursor.execute(sql, values)
+            #     self.mydb.commit()
+            #     self.dialog = MDDialog(
+            #         title="Success!",
+            #         text="New Trip Added Successfully!",
+            #         buttons=[
+            #             MDFlatButton(
+            #                 text="Close",
+            #                 on_release=self.close_dialog
+            #             )
+            #         ]
+            #     )
+            #     self.dialog.open()
 
     # API Done
     def open_location_menu(self):
