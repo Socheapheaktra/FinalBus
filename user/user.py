@@ -20,6 +20,8 @@ from threading import Thread
 import mysql.connector
 import datetime
 
+baseURL = "https://bus-api.vercel.app/"
+
 #FIXME: Available seat always shows 15 (Not really a problem because I imported the old database)
 
 Builder.load_file("user/user.kv")
@@ -95,13 +97,13 @@ class TripSummary(GridLayout):
 class UserWindow(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            passwd="",
-            database="bus_reservation"
-        )
-        self.mycursor = self.mydb.cursor()
+        # self.mydb = mysql.connector.connect(
+        #     host="localhost",
+        #     user="root",
+        #     passwd="",
+        #     database="bus_reservation"
+        # )
+        # self.mycursor = self.mydb.cursor()
 
         self.location_items = []
         self.dialog = None
@@ -119,7 +121,7 @@ class UserWindow(MDBoxLayout):
     def get_locations(self):
         req = requests.request(
             "GET",
-            "http://127.0.0.1:5000/getLocationNames"
+            f"{baseURL}getLocationNames"
         )
         response = req.json()
         for x in response['data']:
@@ -283,7 +285,7 @@ class UserWindow(MDBoxLayout):
             try:
                 req = requests.request(
                     "POST",
-                    "http://127.0.0.1:5000/checkOut",
+                    f"{baseURL}checkOut",
                     json=body
                 )
             except Exception as e:
@@ -450,7 +452,7 @@ class UserWindow(MDBoxLayout):
 
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/searchTicket",
+                f"{baseURL}searchTicket",
                 json=body
             )
 
@@ -546,7 +548,7 @@ class UserWindow(MDBoxLayout):
 
         req = requests.request(
             "POST",
-            "http://127.0.0.1:5000/getPurchaseSummary",
+            f"{baseURL}getPurchaseSummary",
             json=body
         )
 
@@ -588,7 +590,7 @@ class UserWindow(MDBoxLayout):
     def set_seat_layout(self, trip_id):
         self.ids.seat_layout.clear_widgets()
 
-        req = requests.request("POST", "http://127.0.0.1:5000/getSeatLayout",
+        req = requests.request("POST", f"{baseURL}getSeatLayout",
                                json={"trip_id": trip_id})
         response = req.json()
 
@@ -717,7 +719,7 @@ class UserWindow(MDBoxLayout):
         # result = self.mycursor.fetchone()
         # user_id = result[0]
         body = {"username": self.ids.nav_drawer_header.text}
-        req = requests.request("POST", "http://127.0.0.1:5000/getUserID", json=body)
+        req = requests.request("POST", f"{baseURL}getUserID", json=body)
         response = req.json()
         self.set_purchased_ticket(user_id=response['data']['user_id'])
 
@@ -729,7 +731,7 @@ class UserWindow(MDBoxLayout):
     def set_purchased_ticket(self, user_id):
         self.ids.purchased_ticket.clear_widgets()
         try:
-            req = requests.request("POST", "http://127.0.0.1:5000/getPurchaseTicket", json={"user_id": user_id})
+            req = requests.request("POST", f"{baseURL}getPurchaseTicket", json={"user_id": user_id})
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -872,7 +874,7 @@ class UserWindow(MDBoxLayout):
 
         req = requests.request(
             "POST",
-            "http://127.0.0.1:5000/getPurchaseSummary",
+            f"{baseURL}getPurchaseSummary",
             json=body
         )
 
@@ -918,7 +920,7 @@ class UserWindow(MDBoxLayout):
         }
         req = requests.request(
             "POST",
-            "http://127.0.0.1:5000/getUserInfo",
+            f"{baseURL}getUserInfo",
             json=body
         )
 
@@ -977,7 +979,7 @@ class UserWindow(MDBoxLayout):
 
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/updateUserPassword",
+                f"{baseURL}updateUserPassword",
                 json=body
             )
             response = req.json()
@@ -1099,7 +1101,7 @@ class UserWindow(MDBoxLayout):
                 }
                 req = requests.request(
                     "POST",
-                    "http://127.0.0.1:5000/updateUserInfo",
+                    f"{baseURL}updateUserInfo",
                     json=body
                 )
                 response = req.json()

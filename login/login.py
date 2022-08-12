@@ -8,6 +8,7 @@ from kivymd.uix.dialog import MDDialog
 import requests, mysql.connector
 
 Builder.load_file("login/login.kv")
+baseURL = "https://bus-api.vercel.app/"
 
 class LoginWindow(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -21,7 +22,7 @@ class LoginWindow(MDBoxLayout):
         }
         req = requests.request(
             "POST",
-            "http://127.0.0.1:5000/validateUser",
+            f"{baseURL}validateUser",
             json=body
         )
 

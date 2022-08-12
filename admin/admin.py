@@ -20,6 +20,8 @@ import requests
 Builder.load_file("admin/admin.kv")
 
 selected_booking_id = 0
+baseURL = "https://bus-api.vercel.app/"
+localhost = "http://127.0.0.1:5000/"
 
 class BusStatusField(MDBoxLayout):
     def __init__(self, **kwargs):
@@ -77,13 +79,13 @@ class TransactionSummary(GridLayout):
 class AdminWindow(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.mydb = mysql.connector.connect(
-            host='localhost',
-            database='bus_reservation',
-            user='root',
-            passwd='',
-        )
-        self.mycursor = self.mydb.cursor()
+        # self.mydb = mysql.connector.connect(
+        #     host='localhost',
+        #     database='bus_reservation',
+        #     user='root',
+        #     passwd='',
+        # )
+        # self.mycursor = self.mydb.cursor()
 
         self.dialog = None
         self.dob_date = None
@@ -100,7 +102,7 @@ class AdminWindow(MDBoxLayout):
         # self.mycursor.execute(sql)
         # result = self.mycursor.fetchall()
         try:
-            req = requests.request("GET", "http://127.0.0.1:5000/showUserTable")
+            req = requests.request("GET", f"{baseURL}showUserTable")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -214,7 +216,7 @@ class AdminWindow(MDBoxLayout):
         # self.mycursor.execute(sql)
         # result = self.mycursor.fetchall()
         try:
-            req = requests.request("GET", "http://127.0.0.1:5000/showTripTable")
+            req = requests.request("GET", f"{baseURL}showTripTable")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -242,42 +244,42 @@ class AdminWindow(MDBoxLayout):
                         MDLabel(
                             text=data['bus_name'],
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.trip_table_content.add_widget(
                         MDLabel(
                             text=data['location'],
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.trip_table_content.add_widget(
                         MDLabel(
                             text=f"$ {data['price']}",
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.trip_table_content.add_widget(
                         MDLabel(
                             text=data['seat'],
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.trip_table_content.add_widget(
                         MDLabel(
                             text=data['departure_date'],
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.trip_table_content.add_widget(
                         MDLabel(
                             text=data['departure_time'],
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.trip_table_content.add_widget(
@@ -286,7 +288,7 @@ class AdminWindow(MDBoxLayout):
                             theme_text_color="Custom",
                             text_color=(0, 1, 0, 1) if data['status'] == "Active" else (1, 0, 0, 1),
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
             else:
@@ -302,7 +304,7 @@ class AdminWindow(MDBoxLayout):
         # self.mycursor.execute(sql)
         # result = self.mycursor.fetchall()
         try:
-            req = requests.request("GET", "http://127.0.0.1:5000/showBusTable")
+            req = requests.request("GET", f"{baseURL}showBusTable")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -330,7 +332,7 @@ class AdminWindow(MDBoxLayout):
                         MDLabel(
                             text=data['bus_name'],
                             size_hint_y=None,
-                            height=50
+                            height=dp(50)
                         )
                     )
                     self.ids.bus_table_content.add_widget(
@@ -382,7 +384,7 @@ class AdminWindow(MDBoxLayout):
         #     uid_list.append(x[0])
 
         req = requests.request("GET",
-                               "http://127.0.0.1:5000/getDistinctUserID")
+                               f"{baseURL}getDistinctUserID")
         response = req.json()
         uid_list = response['data']
 
@@ -402,7 +404,7 @@ class AdminWindow(MDBoxLayout):
                             "uid": uid
                         }
                         req = requests.request("POST",
-                                               "http://127.0.0.1:5000/searchTransaction",
+                                               f"{baseURL}searchTransaction",
                                                json=body)
 
                         response = req.json()
@@ -491,7 +493,7 @@ class AdminWindow(MDBoxLayout):
         # result = self.mycursor.fetchall()
         try:
             req = requests.request("GET",
-                                   "http://127.0.0.1:5000/showTransaction")
+                                   f"{baseURL}showTransaction")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -537,7 +539,7 @@ class AdminWindow(MDBoxLayout):
         }
 
         req = requests.request("POST",
-                               "http://127.0.0.1:5000/showTransactionDetail",
+                               f"{baseURL}showTransactionDetail",
                                json=body)
         response = req.json()
 
@@ -579,7 +581,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/updateTransaction",
+                f"{baseURL}updateTransaction",
                 json={"booking_id": booking_id}
             )
             # sql = 'UPDATE booking, payment_offline ' \
@@ -641,7 +643,7 @@ class AdminWindow(MDBoxLayout):
             }
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/admin/addUser",
+                f"{baseURL}admin/addUser",
                 json=body
             )
         except Exception as e:
@@ -750,7 +752,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/admin/updateUser",
+                f"{baseURL}admin/updateUser",
                 json=body
             )
         except Exception as e:
@@ -874,7 +876,7 @@ class AdminWindow(MDBoxLayout):
         # for x in result:
         #     username_list.append(x[0])
         try:
-            req = requests.request("GET", "http://127.0.0.1:5000/admin/getUsername")
+            req = requests.request("GET", f"{baseURL}admin/getUsername")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -927,7 +929,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/admin/removeUser",
+                f"{baseURL}admin/removeUser",
                 json={"username": username}
             )
             # sql = 'DELETE FROM users WHERE user_name=%s'
@@ -988,7 +990,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/admin/addBus",
+                f"{baseURL}admin/addBus",
                 json=body
             )
         except Exception as e:
@@ -1100,7 +1102,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/admin/updateBus",
+                f"{baseURL}admin/updateBus",
                 json=body
             )
         except Exception as e:
@@ -1232,7 +1234,7 @@ class AdminWindow(MDBoxLayout):
             try:
                 req = requests.request(
                     "POST",
-                    "http://127.0.0.1:5000/addTrip",
+                    f"{baseURL}addTrip",
                     json=body
                 )
             except Exception as e:
@@ -1337,7 +1339,7 @@ class AdminWindow(MDBoxLayout):
         # result = self.mycursor.fetchall()
         items = list()
         try:
-            req = requests.request("GET", "http://127.0.0.1:5000/admin/getLocationNames")
+            req = requests.request("GET", f"{baseURL}admin/getLocationNames")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -1446,7 +1448,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/getActiveBus",
+                f"{baseURL}getActiveBus",
                 json={'location': location}
             )
         except Exception as e:
@@ -1567,7 +1569,7 @@ class AdminWindow(MDBoxLayout):
                 }
                 req = requests.request(
                     "POST",
-                    "http://127.0.0.1:5000/updateTrip",
+                    f"{baseURL}updateTrip",
                     json=body
                 )
             except Exception as e:
@@ -1648,7 +1650,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/endTrip",
+                f"{baseURL}endTrip",
                 json={"trip_id": trip_id}
             )
             # sql = 'UPDATE trip, bus, bus_seat ' \
@@ -1708,7 +1710,7 @@ class AdminWindow(MDBoxLayout):
         # result = self.mycursor.fetchall()
         items = list()
         try:
-            req = requests.request("GET", "http://127.0.0.1:5000/getActiveTrip")
+            req = requests.request("GET", f"{baseURL}getActiveTrip")
         except Exception as e:
             self.dialog = MDDialog(
                 title="Error!",
@@ -1764,7 +1766,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/getTripDetail",
+                f"{baseURL}getTripDetail",
                 json={"trip_id": trip_id}
             )
         except Exception as e:
@@ -1851,7 +1853,7 @@ class AdminWindow(MDBoxLayout):
                 }
                 req = requests.request(
                     "POST",
-                    "http://127.0.0.1:5000/updateAdminPassword",
+                    f"{baseURL}updateAdminPassword",
                     json=body
                 )
             except Exception as e:
@@ -1978,7 +1980,7 @@ class AdminWindow(MDBoxLayout):
 
                 req = requests.request(
                     "POST",
-                    "http://127.0.0.1:5000/updateAdminInfo",
+                    f"{baseURL}updateAdminInfo",
                     json=body
                 )
 
@@ -2086,7 +2088,7 @@ class AdminWindow(MDBoxLayout):
         try:
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/getAdminInfo",
+                f"{baseURL}getAdminInfo",
                 json={"username": username}
             )
         except Exception as e:

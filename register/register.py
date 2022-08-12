@@ -9,6 +9,7 @@ from kivymd.uix.button import MDFlatButton
 import mysql.connector
 
 Builder.load_file("register/register.kv")
+baseURL = "https://bus-api.vercel.app/"
 
 class RegisterTextField(MDTextField):
     pass
@@ -16,13 +17,13 @@ class RegisterTextField(MDTextField):
 class RegisterWindow(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            passwd="",
-            database="bus_reservation"
-        )
-        self.mycursor = self.mydb.cursor()
+        # self.mydb = mysql.connector.connect(
+        #     host="localhost",
+        #     user="root",
+        #     passwd="",
+        #     database="bus_reservation"
+        # )
+        # self.mycursor = self.mydb.cursor()
 
         self.dialog = None
 
@@ -48,7 +49,7 @@ class RegisterWindow(MDBoxLayout):
             }
             req = requests.request(
                 "POST",
-                "http://127.0.0.1:5000/registerUser",
+                f"{baseURL}registerUser",
                 json=body
             )
             response = req.json()

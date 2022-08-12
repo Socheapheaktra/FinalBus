@@ -1,49 +1,28 @@
 from kivy.lang import Builder
 
 from kivymd.app import MDApp
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.expansionpanel import MDExpansionPanel, MDExpansionPanelThreeLine
-from kivymd import images_path
 
 KV = '''
-<Content>
-    adaptive_height: True
+MDScreen:
 
-    TwoLineIconListItem:
-        text: "(050)-123-45-67"
-        secondary_text: "Mobile"
+    MDSpinner:
+        size_hint: None, None
+        size: dp(46), dp(46)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        active: True if check.active else False
 
-        IconLeftWidget:
-            icon: 'phone'
-
-
-ScrollView:
-
-    MDGridLayout:
-        id: box
-        cols: 1
-        adaptive_height: True
+    MDCheckbox:
+        id: check
+        size_hint: None, None
+        size: dp(48), dp(48)
+        pos_hint: {'center_x': .5, 'center_y': .4}
+        active: True
 '''
 
-class Content(MDBoxLayout):
-    '''Custom content.'''
 
 class Test(MDApp):
     def build(self):
         return Builder.load_string(KV)
 
-    def on_start(self):
-        for i in range(2):
-            self.root.ids.box.add_widget(
-                MDExpansionPanel(
-                    icon=f"{images_path}kivymd.png",
-                    content=Content(),
-                    panel_cls=MDExpansionPanelThreeLine(
-                        text="Text",
-                        secondary_text="Secondary text",
-                        tertiary_text="Tertiary text",
-                    )
-                )
-            )
 
 Test().run()
