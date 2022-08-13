@@ -2180,8 +2180,6 @@ class AdminWindow(MDBoxLayout):
             self.ids.scrn_mngr.transition.direction = "left"
         self.ids.scrn_mngr.current = "scrn_bus"
 
-        self.show_bus_table()
-
     def goto_add_bus(self):
         self.ids.bus_name_fld.text = ""
         self.ids.bus_price_fld.text = ""
