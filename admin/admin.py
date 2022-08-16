@@ -14,7 +14,6 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.properties import StringProperty
 
 import datetime
-import mysql.connector
 import requests
 
 Builder.load_file("admin/admin.kv")
